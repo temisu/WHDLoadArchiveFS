@@ -31,14 +31,45 @@ static int read_func(void *dest,uint32_t length,uint32_t offset,void *context)
  	return ret;
 }
 
-void *container_malloc(uint32_t size)
-{
-	return malloc(size);
+#define readMax 10	// max files to read
+#define skipMax 20	// max files to skip, them terminate
+#define fibMax 30	// max entries to process
+
+int fileCount = 0;
+void files[readMax];	// files read
+int fibCount = 0;
+
+/*
+	read some files
+	skip some files
+	then terminate
+*/
+static int whd_allocFile(const char *name, uint32_t length) {
+	void *mem;
+	if (fileCount < readMax) {
+		mem = malloc(length);
+		// check error...
+		files[fileCount] = mem;
+	} else if (fileCount < skipMax) {
+		mem = -1;
+	} else {
+		mem = NULL;
+	}
+	printf("whd_allocFile: num=%d name=%s len=%d rc=%x\n");
+	fileCount++;
 }
 
-void container_free(void *ptr)
-{
-	free(ptr);
+/*
+	retrieve some fibs then terminate
+*/
+static int whd_registerEntry(const char *path, const FIB *fib) {
+	if (fibCount < fibMax) {
+		printFIB(fib);
+		fibCount++;
+		return -1;
+	} else {
+		return 0;
+	}
 }
 
 struct FIB
@@ -160,7 +191,7 @@ int main(int argc,char **argv)
 	}
 
 	void *container;
-	ret=container_initialize(&container,(void*)(size_t)fd,read_func,st.st_size);
+	ret=container_initialize(&container,argv[1]);
 	if (ret) printf("container_initialize failed with code %d\n",ret);
 	if (!ret)
 	{
@@ -168,41 +199,25 @@ int main(int argc,char **argv)
 
 		printf("-------------------------------------------------------------------------------\n");
 
-		printf("container_getFileList:\n");
-		const char** fileList=container_getFileList(container);
-		const char** tmp=fileList;
-		while(*tmp)
-		{
-			printf("%s Length: %u, isCompressed %u\n",*tmp,container_getFileSize(container,*tmp),container_isCompressed(container,*tmp));
-			tmp++;
+		printf("container_fileCache:\n");
+		ret = container_fileCache(container,&whd_allocFile);
+		printf("container_fileCache retunred error code %d\n",ret);
+		while (fileCount) {
+			free(files[fileCount--]);
 		}
 
 		printf("-------------------------------------------------------------------------------\n");
 
-		tmp=fileList;
-		while (*tmp)
-		{
-			uint8_t buffer[16];
-			uint32_t length=container_getFileSize(container,*tmp)>16?16:container_getFileSize(container,*tmp);
-			ret=container_fileRead(&buffer,container,*tmp,length,0);
-			if (ret<0)
-			{
-				printf("container_fileRead failed for '%s'\n",*tmp);
-			} else {
-				int i;
-				printf("container_fileRead for '%s' (%u bytes): ",*tmp,length);
-				for (i=0;i<length;i++) printf("%02x ",buffer[i]);
-				printf("\n");
-			}
-			tmp++;
-		}
+		printf("container_examine:\n");
+		ret = container_examine(container,&whd_registerEntry);
+		printf("container_examine retunred error code %d\n",ret);
 
 		printf("-------------------------------------------------------------------------------\n");
 
-		ret=processDirectory(container,"");
-		if (ret) printf("Directory parsing failed with error code %d\n",ret);
-
-		printf("-------------------------------------------------------------------------------\n");
+		/*
+		would be useful the have a test for container_getFileSize and container_fileRead too
+		maybe one case with an invalid filename and second with a filename saved from the container_examine call
+		*/
 
 		container_uninitialize(container);
 	}
