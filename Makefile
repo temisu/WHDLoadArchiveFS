@@ -6,7 +6,7 @@ LDFLAGS =
 
 PROG	= test
 
-OBJS	= container_api.o container_common.o container_lha.o container_zip.o test.o
+OBJS	= container_api.o container_common.o container_integration.o container_lha.o container_zip.o test.o
 
 all: $(PROG)
 

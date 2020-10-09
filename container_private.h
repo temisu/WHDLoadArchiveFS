@@ -25,7 +25,8 @@ struct container_cached_file_entry
 	uint32_t				mtimeMinutes;
 	uint32_t				mtimeTicks;
 
-	/* filename includes path (if path exists) */
+	char					*path;
+	char					*pathAndName;
 	char					*filename;
 	char					*filenote;
 
@@ -35,15 +36,6 @@ struct container_cached_file_entry
 
 
 struct container_state;
-struct FIB;
-
-struct container_examine_state
-{
-	struct container_state			*container;
-
-	const struct container_cached_file_entry *current;
-	uint32_t				matchedLength;
-};
 
 struct container_file_state
 {
@@ -58,16 +50,16 @@ struct container_file_state
 
 struct container_state
 {
-	container_read_func			readFunc;
-	void					*readContext;
+	/* reading the file */
+	void					*file;
 	uint32_t				fileLength;
 
+	/* contents of the container */
 	struct container_cached_file_entry	*firstEntry;
 	struct container_cached_file_entry	*lastEntry;
 	
-	char					**fileList;
-
-	const struct container_cached_file_entry *(*fileOpen)(struct container_file_state *file_state,const char *name);
+	/* pointers to the implementation */
+	int (*fileOpen)(struct container_file_state *file_state,const struct container_cached_file_entry *entry);
 	int (*fileRead)(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset);
 
 	union
@@ -80,10 +72,9 @@ struct container_state
 struct container_combined_state
 {
 	struct container_state			container;
-	struct container_examine_state		examine_state;
-	struct container_file_state		file_state;
+	struct container_file_state		fileState;
 
-	const char				*current_file;
+	const struct container_cached_file_entry *currentFile;
 };
 
 struct FIB
@@ -114,7 +105,7 @@ struct FIB
 	/* not really used */
 	uint16_t				uid;
 	uint16_t				gid;
-	/* and reserved 32 bytes which do not need to be allocated */
+	uint8_t					reserved[32];
 };
 
 #endif

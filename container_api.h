@@ -23,14 +23,6 @@ typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
 #endif
 
-/*
-   These are the memory allocation functions that need to be available
-   in order to container_api to link.
-   Semantics should be the same as in malloc/free (memory from heap)
-*/
-
-extern void *container_malloc(uint32_t size);
-extern void container_free(void *ptr);
 
 /*
    Define this and the code tries to open non-amiga archives as well
@@ -50,31 +42,43 @@ extern void container_free(void *ptr);
 #define CONTAINER_ERROR_DECOMPRESSION_ERROR (-8)
 #define CONTAINER_ERROR_INVALID_READ (-9)
 
+/* callback functions for the API */
+
 /*
-   The read function given as a parameter to the container_initialize function
-   will be called by the container_* functions in order to read the file
+   container_allocFile will be called by container_fileCache for each file in the container.
    Parameters:
-	* dest - pointer to destination buffer to be filled
-	* length - length of data to be read
-	* offset - file offset from where to start reading
-	* context - a pass through pointer for context
+	* name - name of the file, including path
+	* length - length of the file
    Returns:
-	* bytes read if succesfull - it is expected that length bytes is returned i.e. no partial reads
-	* negative values in case of errors - these negative values are passed through on container_* functions are their return values
+	* null - when no more files are wanted. i.e. terminate the container_fileCache
+	* -1 casted as void* - skip this file
+	* any other pointer - allocated buffer of at least file length where the file is requested to read into
 */
-typedef int (*container_read_func)(void *dest,uint32_t length,uint32_t offset,void *context);
+typedef void *(*container_allocFile)(const char *name,uint32_t length);
+
+/*
+   container_registerEntry will be calles by container_examine for each entry in the container
+   Parameters:
+	* path - path of the file
+	* fib - pointer to the 232-byte fib structure for the entry
+   Returns:
+	* 0 - stop processing further entries
+	* -1 (or any nonzero value) - continue processing
+*/
+typedef int (*container_registerEntry)(const char *path,const void *fib);
+
+
+/* API */
 
 /*
    Initialize container. Will allocate memory for the directory structure, file list and internal state.
    Parameters:
 	* container - return pointer to void* container. Will be initialized if successfull
-	* context - a pass through pointer to the read function
-	* read_func - function pointer to the read function which will be used to read the archive
-	* length - file length for the archive
+	* filename - filename for the container
    Returns:
-	* error code or 0 if success. In case error occured all allocated memory is freed0
+	* error code or 0 if success. In case error occured all allocated memory is freed
 */
-extern int container_initialize(void **container,void *context,container_read_func read_func,uint32_t length);
+extern int container_initialize(void **container,const char *filename);
 
 /*
    Uninitialize container. frees all memory
@@ -84,15 +88,6 @@ extern int container_initialize(void **container,void *context,container_read_fu
 	* error code or 0 if success.
 */
 extern int container_uninitialize(void *container);
-
-/*
-   Query a file list. Does not allocate memory, will always succeed
-   Parameters:
-	* container - pointer to container
-   Returns:
-	* Pointer to null terminated string table container filenames with paths of all the files in the archive
-*/
-extern const char **container_getFileList(void *container);
 
 /*
    Get file size. Does not allocate memory
@@ -105,38 +100,26 @@ extern const char **container_getFileList(void *container);
 extern int container_getFileSize(void *container,const char *name);
 
 /*
-   Test if file compressed. Does not allocate memory
+   Read (chosen) files into fileCache.
+   Does not allocate memory
+   container_fileCache will call container_allocFile for each file in the container and if the function returns with a valid pointer
+   file contents are read to it. container_fileCache is cant be called in parallel to container_fileRead in scope of same container
    Parameters:
-	* container - pointer to container
-	* name - file name w. path
+	* fileFunc - function to call for each file
    Returns:
-	* error code or 0 if success.
-	* error code or 0 for non-compressed, 1 for compressed
+	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
 */
-extern int container_isCompressed(void *container,const char *name);
+extern int container_fileCache(void *container,container_allocFile fileFunc);
 
 /*
-   Fill in relevant portions 232-byte FIB for a file entry. initialize internal state if file is a directory for exnext
+   Query FIB of all the entries in the container.
    Does not allocate memory
    Parameters:
-	* dest_fib - pointer to the FIB to be filled
-	* container - pointer to container
-	* name - file name w. path
+	* registerFunc - function to call for each entry
    Returns:
 	* error code or 0 if success.
 */
-extern int container_examine(void *dest_fib,void *container,const char *name);
-
-/*
-   Fill in relevant portions 232-byte FIB for a file entry for next item in the directory
-   Does not allocate memory
-   Parameters:
-	* dest_fib - pointer to the FIB to be filled
-	* container - pointer to container
-   Returns:
-	* error code or 0 if success.
-*/
-extern int container_exnext(void *dest_fib,void *container);
+extern int container_examine(void *container,container_registerEntry registerFunc);
 
 /*
    Read a file

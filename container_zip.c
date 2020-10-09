@@ -5,5 +5,5 @@
 
 int container_zip_initialize(struct container_state *container)
 {
-	return 0;
+	return -1;
 }

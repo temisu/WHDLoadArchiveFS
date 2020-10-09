@@ -1,68 +1,104 @@
 /* Copyright (C) Teemu Suutari */
 
 #include "container_private.h"
+#include "container_integration.h"
 #include "container_common.h"
 
-int container_initialize(void **_container,void *context,container_read_func read_func,uint32_t length)
+static int container_fileReadRaw(void *dest,struct container_combined_state *combined,const struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
 {
 	int ret;
-	uint32_t fileCount;
-	uint8_t hdr[3];
-	struct container_combined_state *combined_state;
+	struct container_state *container=&combined->container;
+
+	if (combined->currentFile!=entry)
+	{
+		ret=container->fileOpen(&combined->fileState,entry);
+		if (ret<0) return ret;
+		combined->currentFile=entry;
+	}
+	return container->fileRead(dest,&combined->fileState,length,offset);
+}
+
+/*
+   createFIB function must be run on a Big Endian machine for the results to be really meaningful
+   Otherwise useful only for testing
+*/
+
+static void container_createFIB(struct FIB *dest,const struct container_cached_file_entry *entry)
+{
+	uint32_t i;
+
+	dest->diskKey=0;
+	dest->dirEntryType=entry->fileType;
+	for (i=0;i<107&&entry->filename[i];i++)
+		dest->filename[i]=entry->filename[i];
+	dest->filename[i]=0;
+	dest->protection=entry->protection;
+	dest->entryType=entry->fileType;
+	dest->size=entry->length;
+	dest->blocks=(entry->length+511)&~511U;
+	dest->mtimeDays=entry->mtimeDays;
+	dest->mtimeMinutes=entry->mtimeMinutes;
+	dest->mtimeTicks=entry->mtimeTicks;
+	for (i=0;i<79&&entry->filenote[i];i++)
+		dest->comment[i]=entry->filenote[i];
+	dest->comment[i]=0;
+	dest->uid=0;
+	dest->gid=0;
+}
+
+static const struct container_cached_file_entry *container_findEntry(struct container_state *container,const char *name)
+{
 	struct container_cached_file_entry *entry;
-	
-	combined_state=container_malloc(sizeof(struct container_combined_state));
-	if (!combined_state)
+	const char *name1,*name2;
+
+	entry=container->firstEntry;
+	while (entry)
+	{
+		name1=entry->pathAndName;
+		name2=name;
+		while(*name1 && *name1==*name2)
+		{
+			name1++;
+			name2++;
+		}
+		if (!*name1 && !*name2)
+			return entry;
+		entry=entry->next;
+	}
+	return 0;
+}
+
+/* --- */
+
+int container_initialize(void **_container,const char *filename)
+{
+	int ret;
+	uint8_t hdr[3];
+	struct container_combined_state *combinedState;
+
+	combinedState=container_malloc(sizeof(struct container_combined_state));
+	if (!combinedState)
 		return CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED;
+	combinedState->fileState.container=&combinedState->container;
 
-	combined_state->container.readContext=context;
-	combined_state->container.readFunc=read_func;
-	combined_state->container.fileLength=length;
-	combined_state->container.firstEntry=0;
-	combined_state->container.lastEntry=0;
-	combined_state->container.fileList=0;
-	combined_state->current_file=0;
-	ret=read_func(hdr,3,2,context);
-	if (ret<0) return ret;
-	if (ret!=3) return CONTAINER_ERROR_INVALID_FORMAT;
-
-	combined_state->examine_state.container=&combined_state->container;
-	combined_state->examine_state.current=0;
-	combined_state->file_state.container=&combined_state->container;
+	ret=container_integration_fileOpen(filename,&combinedState->container.fileLength,&combinedState->container.file);
+	if (!ret)
+	{
+		combinedState->container.firstEntry=0;
+		combinedState->container.lastEntry=0;
+		combinedState->currentFile=0;
+		ret=container_integration_fileRead(hdr,3,2,combinedState->container.file);
+		if (ret>=0 && ret!=3) ret=CONTAINER_ERROR_INVALID_FORMAT;
+	} else {
+		combinedState->container.file=0;
+	}
 
 	/* although not good enough for the generic case, this works for amiga lha/zip archives */
-	if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=container_lha_initialize(&combined_state->container);
-		else ret=container_zip_initialize(&combined_state->container);
+	if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=container_lha_initialize(&combinedState->container);
+		else ret=container_zip_initialize(&combinedState->container);
 
-	if (!ret)
-	{
-		fileCount=0;
-		entry=combined_state->container.firstEntry;
-		while (entry)
-		{
-			if (entry->fileType==CONTAINER_TYPE_FILE)
-				fileCount++;
-			entry=entry->next;
-		}
-		combined_state->container.fileList=container_malloc((fileCount+1)*sizeof(char*));
-		if (!combined_state->container.fileList)
-			ret=CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED;
-		
-	}
-	if (!ret)
-	{
-		fileCount=0;
-		entry=combined_state->container.firstEntry;
-		while (entry)
-		{
-			if (entry->fileType==CONTAINER_TYPE_FILE)
-				combined_state->container.fileList[fileCount++]=entry->filename;
-			entry=entry->next;
-		}
-		combined_state->container.fileList[fileCount]=0;
-	}
-	if (ret<0) container_uninitialize(combined_state);
-	*_container=ret?0:combined_state;
+	if (ret<0) container_uninitialize(combinedState);
+	*_container=ret?0:combinedState;
 	return ret;
 }
 
@@ -71,8 +107,6 @@ int container_uninitialize(void *_container)
 	struct container_cached_file_entry *tmp,*prev;
 	struct container_state *container=&((struct container_combined_state*)_container)->container;
 
-	if (container->fileList) container_free(container->fileList);
-	container->fileList=0;
 	tmp=container->lastEntry;
 	while (tmp)
 	{
@@ -82,41 +116,72 @@ int container_uninitialize(void *_container)
 	}
 	container->firstEntry=0;
 	container->lastEntry=0;
+	if (container->file)
+		container_integration_fileClose(container->file);
 	container_free(_container);
 	return 0;
 }
 
-const char **container_getFileList(void *_container)
-{
-	struct container_state *container=&((struct container_combined_state*)_container)->container;
-	return (const char**)container->fileList;
-}
-
 int container_getFileSize(void *_container,const char *name)
 {
+	const struct container_cached_file_entry *entry;
 	struct container_state *container=&((struct container_combined_state*)_container)->container;
-	return container_common_getFileSize(container,name);
+
+	entry=container_findEntry(container,name);
+	if (!entry)
+		return CONTAINER_ERROR_FILE_NOT_FOUND;
+	if (entry->fileType!=CONTAINER_TYPE_FILE)
+		return CONTAINER_ERROR_INVALID_FILE_TYPE;
+	return entry->length;
 }
 
-int container_isCompressed(void *_container,const char *name)
+int container_fileCache(void *_container,container_allocFile fileFunc)
 {
+	void *ptr;
+	int ret;
+	struct container_cached_file_entry *tmp;
+	struct container_combined_state *combined=(struct container_combined_state*)_container;
+	struct container_state *container=&combined->container;
+
+	tmp=container->firstEntry;
+	while (tmp)
+	{
+		if (tmp->fileType==CONTAINER_TYPE_FILE)
+		{
+			ptr=fileFunc(tmp->pathAndName,tmp->length);
+			if (!ptr) break;
+			if (((int)ptr)!=-1)
+			{
+				ret=container_fileReadRaw(ptr,combined,tmp,tmp->length,0);
+				if (ret<0) return ret;
+			}
+		}
+		tmp=tmp->next;
+	}
+	return 0;
+}
+
+int container_examine(void *_container,container_registerEntry registerFunc)
+{
+	struct container_cached_file_entry *tmp;
+	uint32_t i,ret;
+	/* making FIB static would save some stack, but then this func is not re-entrant */
+	struct FIB fib;
 	struct container_state *container=&((struct container_combined_state*)_container)->container;
-	return container_common_isCompressed(container,name);
+
+	for (i=0;i<sizeof(fib)/4;i++) ((uint32_t*)&fib)[i]=0;
+	tmp=container->firstEntry;
+	while (tmp)
+	{
+		container_createFIB(&fib,tmp);
+		ret=registerFunc(tmp->path,&fib);
+		if (!ret) break;
+		tmp=tmp->next;
+	}
+	return 0;
 }
 
-extern int container_examine(void *dest_fib,void *_container,const char *name)
-{
-	struct container_examine_state *examine_state=&((struct container_combined_state*)_container)->examine_state;
-	return container_common_examine(dest_fib,examine_state,name);
-}
-
-extern int container_exnext(void *dest_fib,void *_container)
-{
-	struct container_examine_state *examine_state=&((struct container_combined_state*)_container)->examine_state;
-	return container_common_exnext(dest_fib,examine_state);
-}
-
-extern int container_fileRead(void *dest,void *_container,const char *name,uint32_t length,uint32_t offset)
+int container_fileRead(void *dest,void *_container,const char *name,uint32_t length,uint32_t offset)
 {
 	struct container_combined_state *combined=(struct container_combined_state*)_container;
 	struct container_state *container=&combined->container;
@@ -125,10 +190,10 @@ extern int container_fileRead(void *dest,void *_container,const char *name,uint3
 	int fileLoaded;
 
 	fileLoaded=0;
-	if (combined->current_file)
+	if (combined->currentFile)
 	{
 		name1=name;
-		name2=combined->current_file;
+		name2=combined->currentFile->pathAndName;
 		while(*name1&&*name1==*name2)
 		{
 			name1++;
@@ -138,12 +203,13 @@ extern int container_fileRead(void *dest,void *_container,const char *name,uint3
 	}
 	if (!fileLoaded)
 	{
-		entry=container->fileOpen(&combined->file_state,name);
+		entry=container_findEntry(container,name);
 		if (!entry)
 			return CONTAINER_ERROR_FILE_NOT_FOUND;
 		if (entry->fileType!=CONTAINER_TYPE_FILE)
 			return CONTAINER_ERROR_INVALID_FILE_TYPE;
-		combined->current_file=entry->filename;
+	} else {
+		entry=combined->currentFile;
 	}
-	return container->fileRead(dest,&combined->file_state,length,offset);
+	return container_fileReadRaw(dest,combined,entry,length,offset);
 }

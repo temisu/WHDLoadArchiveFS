@@ -2,6 +2,7 @@
 
 #include "container_private.h"
 #include "container_common.h"
+#include "container_integration.h"
 
 #define HDR_SIZE (22)
 #define HDR_OFFSET_SIZE (0)
@@ -39,7 +40,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	struct container_cached_file_entry *entry;
 	uint8_t *stringSpace;
 
-	if ((ret=container_simpleRead(hdr,HDR_SIZE,offset,container))<0) return ret;
+	if ((ret=container_common_simpleRead(hdr,HDR_SIZE,offset,container))<0) return ret;
 
 	if (hdr[HDR_OFFSET_METHOD]!='-'||hdr[HDR_OFFSET_METHOD+1]!='l'||hdr[HDR_OFFSET_METHOD+2]!='h'||hdr[HDR_OFFSET_METHOD+4]!='-')
 		return CONTAINER_ERROR_INVALID_FORMAT;
@@ -67,7 +68,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 		return CONTAINER_ERROR_INVALID_FORMAT;
 
 	nameOffset=offset+HDR_SIZE;
-	if ((ret=container_simpleRead(hdr,1,offset+HDR_SIZE+nameLength+HDR_MID_OFFSET_OS,container))<0) return ret;
+	if ((ret=container_common_simpleRead(hdr,1,offset+HDR_SIZE+nameLength+HDR_MID_OFFSET_OS,container))<0) return ret;
 	isAmiga=hdr[0]=='A';
 #ifndef CONTAINER_ALLOW_NON_AMIGA_ARCHIVES
 	if (!isAmiga)
@@ -90,7 +91,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 			packedLength-=2;
 			break;
 		}
-		if ((ret=container_simpleRead(hdr,3,offset,container))<0) return ret;
+		if ((ret=container_common_simpleRead(hdr,3,offset,container))<0) return ret;
 		offset+=2;
 		if (packedLength<2)
 			return CONTAINER_ERROR_INVALID_FORMAT;
@@ -124,7 +125,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 
 	/* allocate the cached entry + enough size for strings and their null terminators */
 
-	entry=container_malloc(sizeof(struct container_cached_file_entry)+nameLength+pathLength+3);
+	entry=container_malloc(sizeof(struct container_cached_file_entry)+nameLength+pathLength*2+3);
 	*dest=entry;
 	if (!entry)
 		return CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED;
@@ -136,7 +137,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	/* now process strings */
 	if (pathLength)
 	{
-		if ((ret=container_simpleRead(stringSpace,pathLength,pathOffset,container))<0) return ret;
+		if ((ret=container_common_simpleRead(stringSpace,pathLength,pathOffset,container))<0) return ret;
 		for (i=0;i<pathLength;i++)
 			if ((uint8_t)(stringSpace[i])==0xffU) stringSpace[i]='/';
 
@@ -147,28 +148,55 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 		}
 	}
 
-	if (nameLength) if ((ret=container_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
-	stringSpace[nameLength+pathLength]=0;
-	if (stringSpace[nameLength+pathLength-1]=='/')
-		stringSpace[nameLength+pathLength-1]=0;
-	entry->filename=(char*)stringSpace;
-	entry->filenote=(char*)stringSpace+pathLength+nameLength;
+	if (nameLength) if ((ret=container_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
+	entry->pathAndName=(char*)stringSpace;
+	stringSpace[pathLength+nameLength]=0;
+	entry->filenote=(char*)stringSpace+pathLength*2+nameLength+1;
+	*entry->filenote=0;
+	entry->path=(char*)stringSpace+pathLength+nameLength+1;
 
 	/* funky way to store filenote */
 	if (isAmiga) for (i=pathLength;i<pathLength+nameLength;i++)
 	{
-		if (!stringSpace[i]&&stringSpace[i+1])
+		if (!stringSpace[i])
 		{
-			if (i&&stringSpace[i-1]=='/')
-				stringSpace[i-1]=0;
 			entry->filenote=(char*)stringSpace+i+1;
+			nameLength=i-pathLength;
 			break;
 		}
+	}
+
+	if (!nameLength&&pathLength)
+	{
+		if (stringSpace[pathLength-1]=='/')
+		stringSpace[--pathLength]=0;
 	}
 
 	/* non standard empty directory handling for amiga */
 	if (!packedLength&&!rawLength&&!stringSpace[pathLength])
 		isDir=1;
+
+	if (isDir&&!nameLength)
+	{
+		while (pathLength)
+		{
+			if (stringSpace[pathLength-1]=='/') break;
+			pathLength--;
+			nameLength++;
+		}
+	}
+
+	/* more processing for filenames */
+	entry->filename=(char*)stringSpace+pathLength;
+	if (pathLength)
+	{
+		for (i=0;i<pathLength-1;i++)
+			entry->path[i]=entry->pathAndName[i];
+		entry->path[pathLength-1]=0;
+	} else {
+		*entry->path=0;
+	}
+
 
 	/* whew */
 
@@ -179,7 +207,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 
 	entry->fileType=isDir?CONTAINER_TYPE_DIR:CONTAINER_TYPE_FILE;
 	entry->protection=attributes;
-	entry->mtimeDays=container_dosTimeToAmiga(mtime,&entry->mtimeMinutes,&entry->mtimeTicks);
+	entry->mtimeDays=container_common_dosTimeToAmiga(mtime,&entry->mtimeMinutes,&entry->mtimeTicks);
 #if 0
 	printf("dataOffset 0x%x\n",entry->dataOffset);
 	printf("dataLength 0x%x\n",entry->dataLength);
@@ -190,18 +218,18 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	printf("mtime_days 0x%x\n",entry->mtimeDays);
 	printf("mtime_minutes 0x%x\n",entry->mtimeMinutes);
 	printf("mtime_ticks 0x%x\n",entry->mtimeTicks);
+	printf("path '%s'\n",entry->path);
+	printf("pathAndName '%s'\n",entry->pathAndName);
 	printf("filename '%s'\n",entry->filename);
-	printf("filenote '%s'\n",entry->filenote);
+	printf("filenote '%s'\n\n",entry->filenote);
 #endif
 	return offset+packedLength;
 }
 
-static const struct container_cached_file_entry *container_lha_fileOpen(struct container_file_state *file_state,const char *name)
+static int container_lha_fileOpen(struct container_file_state *file_state,const struct container_cached_file_entry *entry)
 {
-	const struct container_cached_file_entry *entry;
-	entry=container_common_findEntry(file_state->container,name);
 	file_state->state.lha.entry=entry;
-	return entry;
+	return 0;
 }
 
 static int container_lha_fileRead(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset)
@@ -214,7 +242,7 @@ static int container_lha_fileRead(void *dest,struct container_file_state *file_s
 		return CONTAINER_ERROR_DECOMPRESSION_ERROR;
 	if (length+offset>entry->length)
 		return CONTAINER_ERROR_INVALID_READ;
-	return container_simpleRead(dest,length,entry->dataOffset+offset,file_state->container);
+	return container_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->container);
 }
 
 int container_lha_initialize(struct container_state *container)
@@ -227,7 +255,7 @@ int container_lha_initialize(struct container_state *container)
 	{
 		offset=container_lha_parse_entry(&entry,container,offset);
 		if (offset<0) return offset;
-		container_sortAndInsert(container,entry);
+		container_common_insertFileEntry(container,entry);
 	}
 	container->fileOpen=container_lha_fileOpen;
 	container->fileRead=container_lha_fileRead;
