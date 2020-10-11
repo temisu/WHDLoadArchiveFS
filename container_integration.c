@@ -3,33 +3,22 @@
 #include "container_integration.h"
 
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <stdio.h>
 #include <stdlib.h>
-
-/* very unix-ish at the moment */
 
 int container_integration_fileOpen(const char *filename,uint32_t *length,void **file)
 {
-	int fd=open(filename,O_RDONLY);
+	int fd,l;
+
+	fd=open(filename,O_RDONLY);
 	if (fd<0)
-	{
-		printf("unable to open archive %s\n",filename);
-		return -1;
-	}
-	struct stat st;
-	int ret=fstat(fd,&st);
-	if (ret<0)
-	{
-		printf("unable to stat archive %s\n",filename);
-		close(fd);
-		return -1;
-	}
+		return CONTAINER_ERROR_FILE_NOT_FOUND;
+	l=lseek(fd,0,SEEK_END);
+	if (l<0)
+		return CONTAINER_ERROR_INVALID_FORMAT;
 	*file=(void*)(size_t)fd;
-	*length=st.st_size;
+	*length=l;
 	return 0;
 }
 
@@ -43,11 +32,11 @@ int container_integration_fileRead(void *dest,uint32_t length,uint32_t offset,vo
 {
 	int fd=(int)file;
 	int ret=lseek(fd,offset,SEEK_SET);
-	if (ret==-1)
-	{
-		return -1;
-	}
+	if (ret<0)
+		return CONTAINER_ERROR_INVALID_FORMAT;
  	ret=read(fd,dest,length);
+	if (ret<0)
+		return CONTAINER_ERROR_INVALID_FORMAT;
  	return ret;
 }
 
