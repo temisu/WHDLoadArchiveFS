@@ -4,7 +4,7 @@
 #include "container_integration.h"
 #include "container_common.h"
 
-static int container_fileReadRaw(void *dest,struct container_combined_state *combined,const struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
+static int container_fileReadRaw(struct container_combined_state *combined,void *dest,const struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
 {
 	int ret;
 	struct container_state *container=&combined->container;
@@ -152,7 +152,7 @@ int container_fileCache(void *_container,container_allocFile fileFunc)
 			if (!ptr) break;
 			if (((int)ptr)!=-1)
 			{
-				ret=container_fileReadRaw(ptr,combined,tmp,tmp->length,0);
+				ret=container_fileReadRaw(combined,ptr,tmp,tmp->length,0);
 				if (ret<0) return ret;
 			}
 		}
@@ -181,7 +181,7 @@ int container_examine(void *_container,container_registerEntry registerFunc)
 	return 0;
 }
 
-int container_fileRead(void *dest,void *_container,const char *name,uint32_t length,uint32_t offset)
+int container_fileRead(void *_container,void *dest,const char *name,uint32_t length,uint32_t offset)
 {
 	struct container_combined_state *combined=(struct container_combined_state*)_container;
 	struct container_state *container=&combined->container;
@@ -211,5 +211,5 @@ int container_fileRead(void *dest,void *_container,const char *name,uint32_t len
 	} else {
 		entry=combined->currentFile;
 	}
-	return container_fileReadRaw(dest,combined,entry,length,offset);
+	return container_fileReadRaw(combined,dest,entry,length,offset);
 }

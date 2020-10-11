@@ -103,7 +103,7 @@ int main(int argc,char **argv)
 			/* we checked for errros once. should do it again ... but this is jsut a test */
 			length=container_getFileSize(container,allocatedFilenames[i]);
 			verify=malloc(length);
-			ret=container_fileRead(verify,container,allocatedFilenames[i],length,0);
+			ret=container_fileRead(container,verify,allocatedFilenames[i],length,0);
 			if (ret!=length) printf("container_fileRead failed with code %d\n",ret);
 			for (j=0;j<length;j++)
 			{

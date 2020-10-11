@@ -36,11 +36,10 @@ typedef unsigned char uint8_t;
 #define CONTAINER_ERROR_UNSUPPORTED_FORMAT (-2)
 #define CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED (-3)
 #define CONTAINER_ERROR_FILE_NOT_FOUND (-4)
-#define CONTAINER_ERROR_END_OF_ENTRIES (-5)
-#define CONTAINER_ERROR_NON_AMIGA_ARCHIVE (-6)
-#define CONTAINER_ERROR_INVALID_FILE_TYPE (-7)
-#define CONTAINER_ERROR_DECOMPRESSION_ERROR (-8)
-#define CONTAINER_ERROR_INVALID_READ (-9)
+#define CONTAINER_ERROR_NON_AMIGA_ARCHIVE (-5)
+#define CONTAINER_ERROR_INVALID_FILE_TYPE (-6)
+#define CONTAINER_ERROR_DECOMPRESSION_ERROR (-7)
+#define CONTAINER_ERROR_INVALID_READ (-8)
 
 /* callback functions for the API */
 
@@ -77,6 +76,11 @@ typedef int (*container_registerEntry)(const char *path,const void *fib);
 	* filename - filename for the container
    Returns:
 	* error code or 0 if success. In case error occured all allocated memory is freed
+   Notable error codes:
+	* Pass through errors from container_integration
+	* CONTAINER_ERROR_INVALID_FORMAT - file format could not be parsed
+	* CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
+	* CONTAINER_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */
 extern int container_initialize(void **container,const char *filename);
 
@@ -86,6 +90,8 @@ extern int container_initialize(void **container,const char *filename);
 	* container - pointer to container
    Returns:
 	* error code or 0 if success.
+   Notable error codes:
+	* none
 */
 extern int container_uninitialize(void *container);
 
@@ -95,7 +101,10 @@ extern int container_uninitialize(void *container);
 	* container - pointer to container
 	* name - file name w. path
    Returns:
-	* error code or 0 if success.
+	* error code or file size if success
+   Notable error codes:
+	* CONTAINER_ERROR_FILE_NOT_FOUND - file does not exist
+	* CONTAINER_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
 extern int container_getFileSize(void *container,const char *name);
 
@@ -108,6 +117,9 @@ extern int container_getFileSize(void *container,const char *name);
 	* fileFunc - function to call for each file
    Returns:
 	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
+   Notable error codes:
+	* Pass through errors from container_integration
+	* CONTAINER_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 */
 extern int container_fileCache(void *container,container_allocFile fileFunc);
 
@@ -118,6 +130,8 @@ extern int container_fileCache(void *container,container_allocFile fileFunc);
 	* registerFunc - function to call for each entry
    Returns:
 	* error code or 0 if success.
+   Notable error codes:
+	* none
 */
 extern int container_examine(void *container,container_registerEntry registerFunc);
 
@@ -125,14 +139,20 @@ extern int container_examine(void *container,container_registerEntry registerFun
    Read a file
    Does not allocate memory
    Parameters:
-	* dest - pointer to destination buffer to be filled
 	* container - pointer to container
+	* dest - pointer to destination buffer to be filled
 	* name - file name w. path
 	* length - length of data to be read
 	* offset - file offset from where to start reading
    Returns:
 	* error code or bytes read if success.
+   Notable error codes:
+	* Pass through errors from container_integration
+	* CONTAINER_ERROR_FILE_NOT_FOUND - file does not exist
+	* CONTAINER_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
+	* CONTAINER_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* CONTAINER_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
-extern int container_fileRead(void *dest,void *container,const char *name,uint32_t length,uint32_t offset);
+extern int container_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
 
 #endif
