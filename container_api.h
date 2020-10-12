@@ -78,7 +78,8 @@ typedef int (*container_registerEntry)(const char *path,const void *fib);
 	* error code or 0 if success. In case error occured all allocated memory is freed
    Notable error codes:
 	* Pass through errors from container_integration
-	* CONTAINER_ERROR_INVALID_FORMAT - file format could not be parsed
+	* CONTAINER_ERROR_INVALID_FORMAT - file could not be parsed
+	* CONTAINER_ERROR_UNSUPPORTED_FORMAT - file format not supported
 	* CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
 	* CONTAINER_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */

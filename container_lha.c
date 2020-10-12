@@ -4,117 +4,193 @@
 #include "container_common.h"
 #include "container_integration.h"
 
-#define HDR_SIZE (22)
-#define HDR_OFFSET_SIZE (0)
-#define HDR_OFFSET_CHECKSUM (1)
-#define HDR_OFFSET_METHOD (2)
-#define HDR_OFFSET_PACKEDSIZE (7)
-#define HDR_OFFSET_RAWSIZE (11)
-#define HDR_OFFSET_MTIME (15)
-#define HDR_OFFSET_ATTRIBUTES (19)
-#define HDR_OFFSET_LEVEL (20)
-#define HDR_OFFSET_NAMELENGTH (21)
+#define HDR_L0_SIZE (22)
+#define HDR_L0_OFFSET_SIZE (0)
+#define HDR_L0_OFFSET_CHECKSUM (1)
+#define HDR_L0_OFFSET_METHOD (2)
+#define HDR_L0_OFFSET_PACKEDSIZE (7)
+#define HDR_L0_OFFSET_RAWSIZE (11)
+#define HDR_L0_OFFSET_MTIME (15)
+#define HDR_L0_OFFSET_ATTRIBUTES (19)
+#define HDR_L0_OFFSET_LEVEL (20)
+#define HDR_L0_OFFSET_NAMELENGTH (21)
 
-#define HDR_MID_SIZE (3)
-#define HDR_MID_OFFSET_CRC (0)
-#define HDR_MID_OFFSET_OS (2)
+#define HDR_L2_SIZE (24)
+#define HDR_L2_OFFSET_SIZE (0)
+#define HDR_L2_OFFSET_METHOD (2)
+#define HDR_L2_OFFSET_PACKEDSIZE (7)
+#define HDR_L2_OFFSET_RAWSIZE (11)
+#define HDR_L2_OFFSET_MTIME (15)
+#define HDR_L2_OFFSET_RESERVED (19)
+#define HDR_L2_OFFSET_LEVEL (20)
+#define HDR_L2_OFFSET_CRC (21)
+#define HDR_L2_OFFSET_OS (23)
 
-#define HDR_EXTRA_PATH_ID (2)
+#define HDR_L0_MID_SIZE (2)
+#define HDR_L1_MID_SIZE (3)
+#define HDR_L1_MID_OFFSET_CRC (0)
+#define HDR_L1_MID_OFFSET_OS (2)
+
+#define HDR_EXTRA_FILENAME_ID (0x01U)
+#define HDR_EXTRA_PATH_ID (0x02U)
+#define HDR_EXTRA_ATTRIBUTES_ID (0x40U)
+#define HDR_EXTRA_FILENOTE_ID (0x71U)
 
 /*
-	Reads level1 headers
-	Parses filenote out of filename (if amiga archive)
-	Expected types of lh0, lh5 and lhd
-	Reads only path from extraheaders
-	Does not do CRC
-	Does not process symlinks
-	Will return error on files not conforming to these rules
+   Reads level0, level1 and level2 headers
+   Parses filenote out of filename (if amiga archive) for level0, level1
+   Expected types of lh0, lh5 and lhd
+   Does not process any fancy stuff f.e. symlinks
+   Will return error on files are not conforming to these rules
+
+   Rather complex due to intertwined logic of different levels which still share quite a lot of common, but with quirks...
+   In theory should read non-Amiga archives with good success, but this is not a priority
 */
 static int container_lha_parse_entry(struct container_cached_file_entry **dest,struct container_state *container,uint32_t offset)
 {
 	int ret;
-	uint8_t hdr[HDR_SIZE];
-	uint32_t hdrSize,packedLength,rawLength,mtime,attributes,nameLength;
-	uint32_t extraLength,pathOffset,pathLength,nameOffset,dataType,i;
+	uint8_t hdr[HDR_L2_SIZE];
+	uint32_t hdrSize,packedLength,rawLength,mtime,attributes,level;
+	uint32_t extraLength,maxExtraOffset,pathOffset,pathLength,nameOffset,nameLength,noteOffset,noteLength,dataType,i;
 	int isAmiga,isDir;
 	struct container_cached_file_entry *entry;
 	uint8_t *stringSpace;
 
-	if ((ret=container_common_simpleRead(hdr,HDR_SIZE,offset,container))<0) return ret;
-
-	if (hdr[HDR_OFFSET_METHOD]!='-'||hdr[HDR_OFFSET_METHOD+1]!='l'||hdr[HDR_OFFSET_METHOD+2]!='h'||hdr[HDR_OFFSET_METHOD+4]!='-')
-		return CONTAINER_ERROR_INVALID_FORMAT;
-
-	isDir=0;
-	if (hdr[HDR_OFFSET_METHOD+3]=='d') isDir=1;
-		else if (hdr[HDR_OFFSET_METHOD+3]=='5') dataType=1;
-			else if (hdr[HDR_OFFSET_METHOD+3]=='0') dataType=0;
-				else return CONTAINER_ERROR_UNSUPPORTED_FORMAT;
+	if ((ret=container_common_simpleRead(hdr,HDR_L0_SIZE,offset,container))<0) return ret;
 
 	/* Basic stuff */
-	hdrSize=hdr[HDR_OFFSET_SIZE];
-	if (hdrSize<HDR_SIZE+HDR_MID_SIZE)
-		return CONTAINER_ERROR_INVALID_FORMAT;
-
-	packedLength=GET_LE32(hdr+HDR_OFFSET_PACKEDSIZE)+2;
-	rawLength=GET_LE32(hdr+HDR_OFFSET_RAWSIZE);
-	mtime=GET_LE32(hdr+HDR_OFFSET_MTIME);
-	attributes=hdr[HDR_OFFSET_ATTRIBUTES];
-	if (hdr[HDR_OFFSET_LEVEL]!=1)
+	level=hdr[HDR_L0_OFFSET_LEVEL];
+	if (level>2)
 		return CONTAINER_ERROR_UNSUPPORTED_FORMAT;
+	if (level==2)
+		if ((ret=container_common_simpleRead(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,container))<0) return ret;
 
-	nameLength=hdr[HDR_OFFSET_NAMELENGTH];
-	if (hdrSize<HDR_SIZE+HDR_MID_SIZE+nameLength)
+	if (hdr[HDR_L0_OFFSET_METHOD]!='-'||hdr[HDR_L0_OFFSET_METHOD+1]!='l'||hdr[HDR_L0_OFFSET_METHOD+2]!='h'||hdr[HDR_L0_OFFSET_METHOD+4]!='-')
 		return CONTAINER_ERROR_INVALID_FORMAT;
 
-	nameOffset=offset+HDR_SIZE;
-	if ((ret=container_common_simpleRead(hdr,1,offset+HDR_SIZE+nameLength+HDR_MID_OFFSET_OS,container))<0) return ret;
-	isAmiga=hdr[0]=='A';
+	/* Amiga does not use -lhd- method for empty directories at any level, but we can still support it */
+	isDir=0;
+	if (hdr[HDR_L0_OFFSET_METHOD+3]=='d') isDir=1;
+		else if (hdr[HDR_L0_OFFSET_METHOD+3]=='5') dataType=1;
+			else if (hdr[HDR_L0_OFFSET_METHOD+3]=='0') dataType=0;
+				else return CONTAINER_ERROR_UNSUPPORTED_FORMAT;
+
+	/* common for all header levels */
+	packedLength=GET_LE32(hdr+HDR_L0_OFFSET_PACKEDSIZE)+2;
+	rawLength=GET_LE32(hdr+HDR_L0_OFFSET_RAWSIZE);
+	mtime=GET_LE32(hdr+HDR_L0_OFFSET_MTIME);
+
+	if (level<2)
+	{
+		hdrSize=hdr[HDR_L0_OFFSET_SIZE];
+		attributes=hdr[HDR_L0_OFFSET_ATTRIBUTES];
+		nameLength=hdr[HDR_L0_OFFSET_NAMELENGTH];
+		nameOffset=offset+HDR_L0_SIZE;
+	}
+
+	pathOffset=0;
+	pathLength=0;
+	noteOffset=0;
+	noteLength=0;
+	if (level) {
+		if (level==2)
+		{
+			hdrSize=GET_LE16(hdr+HDR_L2_OFFSET_SIZE);
+			if (hdrSize<HDR_L2_SIZE)
+				return CONTAINER_ERROR_INVALID_FORMAT;
+			attributes=0;
+			nameLength=0;
+			nameOffset=0;
+			isAmiga=hdr[HDR_L2_OFFSET_OS]=='A';
+			maxExtraOffset=offset+hdrSize;
+			offset+=HDR_L2_SIZE;
+		} else {
+			if (hdrSize<HDR_L0_SIZE+HDR_L1_MID_SIZE+nameLength)
+				return CONTAINER_ERROR_INVALID_FORMAT;
+			if ((ret=container_common_simpleRead(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,container))<0) return ret;
+			isAmiga=hdr[0]=='A';
+			if (offset+hdrSize>container->fileLength)
+				return CONTAINER_ERROR_INVALID_FORMAT;
+			maxExtraOffset=container->fileLength;
+			offset+=hdrSize;
+		}
+
+		/* Extra headers i.e. lets find the path and the start of the packed data */
+		i=0;
+		for (;;)
+		{
+			/* if the last item does not have a path and if we are missing the file EOF marker,
+			   we can only read 2 bytes, which are null, so skip */
+			if (offset+3>maxExtraOffset)
+			{
+				offset+=2;
+				i+=2;
+				break;
+			}
+			if ((ret=container_common_simpleRead(hdr,3,offset,container))<0) return ret;
+			offset+=2;
+			i+=2;
+			extraLength=GET_LE16(hdr);
+			if (!extraLength) break;
+			offset++;
+			i++;
+			if (extraLength<3)
+				return CONTAINER_ERROR_INVALID_FORMAT;
+			extraLength-=3;
+			switch (hdr[2])
+			{
+				case HDR_EXTRA_FILENAME_ID:
+				nameOffset=offset;
+				nameLength=extraLength;
+				break;
+
+				case HDR_EXTRA_PATH_ID:
+				pathOffset=offset;
+				pathLength=extraLength;
+				break;
+
+				case HDR_EXTRA_ATTRIBUTES_ID:
+				if (extraLength<1)
+					return CONTAINER_ERROR_INVALID_FORMAT;
+				if ((ret=container_common_simpleRead(hdr,1,offset,container))<0) return ret;
+				attributes=hdr[0];
+				break;
+
+				case HDR_EXTRA_FILENOTE_ID:
+				noteOffset=offset;
+				noteLength=extraLength;
+				break;
+
+				default:
+				break;
+			}
+			offset+=extraLength;
+			i+=extraLength;
+		}
+		/* Technically the first extra header field is part of the main header in level2... */
+		if (level==2) i=2;
+		if (packedLength<i)
+			return CONTAINER_ERROR_INVALID_FORMAT;
+		packedLength-=i;
+	} else {
+		/* no way to encode os - lets play pretend */
+		isAmiga=1;
+
+		if (hdrSize<HDR_L0_SIZE+nameLength)
+			return CONTAINER_ERROR_INVALID_FORMAT;
+		if (offset+hdrSize+HDR_L0_MID_SIZE>container->fileLength)
+			return CONTAINER_ERROR_INVALID_FORMAT;
+		offset+=hdrSize+HDR_L0_MID_SIZE;
+		/* extra stuff (CRC) are not part of header */
+		if (packedLength<HDR_L0_MID_SIZE)
+			return CONTAINER_ERROR_INVALID_FORMAT;
+		packedLength-=HDR_L0_MID_SIZE;
+	}
+
 #ifndef CONTAINER_ALLOW_NON_AMIGA_ARCHIVES
 	if (!isAmiga)
 		return CONTAINER_ERROR_NON_AMIGA_ARCHIVE;
 #endif
-	offset+=hdrSize;
-
-	/* Extra headers i.e. lets find the path and the start of the packed data */
-	pathOffset=0;
-	pathLength=0;
-	for (;;)
-	{
-		/* if the last item does not have a path and if we are missing the file EOF marker,
-		   we can only read 2 bytes, which are null, so skip */
-		if (offset+3>container->fileLength)
-		{
-			offset+=2;
-			if (packedLength<2)
-				return CONTAINER_ERROR_INVALID_FORMAT;
-			packedLength-=2;
-			break;
-		}
-		if ((ret=container_common_simpleRead(hdr,3,offset,container))<0) return ret;
-		offset+=2;
-		if (packedLength<2)
-			return CONTAINER_ERROR_INVALID_FORMAT;
-		packedLength-=2;
-		extraLength=GET_LE16(hdr);
-		if (!extraLength) break;
-		offset++;
-		if (!packedLength)
-			return CONTAINER_ERROR_INVALID_FORMAT;
-		packedLength--;
-		if (extraLength<3)
-			return CONTAINER_ERROR_INVALID_FORMAT;
-		extraLength-=3;
-		if (hdr[2]==HDR_EXTRA_PATH_ID)
-		{
-			pathOffset=offset;
-			pathLength=extraLength;
-		}
-		offset+=extraLength;
-		if (packedLength<extraLength)
-			return CONTAINER_ERROR_INVALID_FORMAT;
-		packedLength-=extraLength;
-	}
 
 	if (isDir)
 	{
@@ -123,9 +199,18 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	} else if (!dataType&&packedLength!=rawLength)
 		return CONTAINER_ERROR_INVALID_FORMAT;
 
-	/* allocate the cached entry + enough size for strings and their null terminators */
-
-	entry=container_malloc(sizeof(struct container_cached_file_entry)+nameLength+pathLength*2+3);
+	/* Allocate the cached entry + enough size for strings and their null terminators
+	   This is little bit wasteful for level 0 headers. Those files should be rare though!
+	   */
+	if (level==2)
+	{
+		i=nameLength+noteLength+pathLength*2+4;
+	} else if (level) {
+		i=nameLength+pathLength*2+3;
+	} else {
+		i=nameLength*2+3;
+	}
+	entry=container_malloc(sizeof(struct container_cached_file_entry)+i);
 	*dest=entry;
 	if (!entry)
 		return CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED;
@@ -149,6 +234,36 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	}
 
 	if (nameLength) if ((ret=container_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
+	if (noteLength)
+	{
+		/* lets make level2 look like level0-1 filenote. it is easier this way, although it requires string search later
+		   level1 is still the most common case and level2 is just corner case
+		 */
+		stringSpace[pathLength+nameLength]=0;
+		if ((ret=container_common_simpleRead(stringSpace+pathLength+nameLength+1,noteLength,noteOffset,container))<0) return ret;
+		nameLength+=noteLength+1;
+	}
+	if (!level)
+	{
+		/* Level0 headers encode whole name + path into a single string stored in the filename
+		   Instead of 0xff, level 0 headers use backslash for directory separator
+		   Empty directories are marked with trailing slash
+
+		   Process the info so that we can get similar functionality as in other levels
+		*/
+		pathLength=0;
+		if (nameLength) for (i=0;i<nameLength;i++)
+		{
+			if (!stringSpace[i]) break;
+			if (stringSpace[i]=='\\')
+			{
+				stringSpace[i]='/';
+				pathLength=i+1;
+			}
+		}
+		nameLength-=pathLength;
+	}
+
 	entry->pathAndName=(char*)stringSpace;
 	stringSpace[pathLength+nameLength]=0;
 	entry->filenote=(char*)stringSpace+pathLength*2+nameLength+1;
