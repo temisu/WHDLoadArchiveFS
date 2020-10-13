@@ -18,6 +18,20 @@ static int container_isLeapYear(uint32_t year)
 
 static const uint16_t container_daysPerMonthAccum[12]={0,31,59,90,120,151,181,212,243,273,304,334};
 
+uint32_t container_common_unixTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
+{
+	uint32_t daysSinceEpoch;
+	// epoch switch from 1970.1.1 to 1978.1.1
+	timestamp-=252460800U;
+
+	daysSinceEpoch=timestamp/86400U;
+	timestamp%=86400U;
+	*minutesSince=timestamp/60U;
+	timestamp%=60U;
+	*ticksSince=timestamp*50U;
+	return daysSinceEpoch;
+}
+
 uint32_t container_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
 {
 	uint32_t seconds,minutes,hours,day,month,year;

@@ -322,7 +322,8 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 
 	entry->fileType=isDir?CONTAINER_TYPE_DIR:CONTAINER_TYPE_FILE;
 	entry->protection=attributes;
-	entry->mtimeDays=container_common_dosTimeToAmiga(mtime,&entry->mtimeMinutes,&entry->mtimeTicks);
+	if (level==2) entry->mtimeDays=container_common_unixTimeToAmiga(mtime,&entry->mtimeMinutes,&entry->mtimeTicks);
+		else entry->mtimeDays=container_common_dosTimeToAmiga(mtime,&entry->mtimeMinutes,&entry->mtimeTicks);
 #if 0
 	printf("dataOffset 0x%x\n",entry->dataOffset);
 	printf("dataLength 0x%x\n",entry->dataLength);
