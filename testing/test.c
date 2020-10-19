@@ -1,6 +1,7 @@
 /* Copyright (C) Teemu Suutari */
 
 #include "container_api.h"
+#include "testing/CRC32.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -100,20 +101,25 @@ int main(int argc,char **argv)
 		if (ret) printf("container_fileCache failed with code %d\n",ret);
 		for (i=0;i<allocatedFileCount;i++)
 		{
-			/* we checked for errros once. should do it again ... but this is jsut a test */
 			length=container_getFileSize(container,allocatedFilenames[i]);
-			verify=malloc(length);
-			ret=container_fileRead(container,verify,allocatedFilenames[i],length,0);
-			if (ret!=length) printf("container_fileRead failed with code %d\n",ret);
-			for (j=0;j<length;j++)
+			if (length<0)
 			{
-				if (((char*)verify)[j]!=((char*)allocatedFiles[i])[j])
+				printf("getFileSize failed with code %d\n",length);
+			} else {
+				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
+				verify=malloc(length);
+				ret=container_fileRead(container,verify,allocatedFilenames[i],length,0);
+				if (ret!=length) printf("container_fileRead failed with code %d\n",ret);
+				for (j=0;j<length;j++)
 				{
-					printf("verify failed for file %s\n",allocatedFilenames[i]);
-					break;
+					if (((char*)verify)[j]!=((char*)allocatedFiles[i])[j])
+					{
+						printf("verify failed for file %s\n",allocatedFilenames[i]);
+						break;
+					}
 				}
+				free(verify);
 			}
-			free(verify);
 			free(allocatedFiles[i]);
 		}
 
