@@ -59,7 +59,7 @@ struct container_state
 	struct container_cached_file_entry	*lastEntry;
 	
 	/* pointers to the implementation */
-	int (*fileOpen)(struct container_file_state *file_state,const struct container_cached_file_entry *entry);
+	int (*fileOpen)(struct container_file_state *file_state,struct container_cached_file_entry *entry);
 	int (*fileRead)(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset);
 
 	union
@@ -74,7 +74,7 @@ struct container_combined_state
 	struct container_state			container;
 	struct container_file_state		fileState;
 
-	const struct container_cached_file_entry *currentFile;
+	struct container_cached_file_entry	*currentFile;
 };
 
 struct FIB

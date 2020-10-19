@@ -9,6 +9,7 @@ struct container_zip_state
 
 struct container_zip_file_state
 {
+	struct container_cached_file_entry	*entry;
 };
 
 struct container_state;

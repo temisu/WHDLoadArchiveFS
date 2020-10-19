@@ -4,7 +4,7 @@
 #include "container_integration.h"
 #include "container_common.h"
 
-static int container_fileReadRaw(struct container_combined_state *combined,void *dest,const struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
+static int container_fileReadRaw(struct container_combined_state *combined,void *dest,struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
 {
 	int ret;
 	struct container_state *container=&combined->container;
@@ -46,7 +46,7 @@ static void container_createFIB(struct FIB *dest,const struct container_cached_f
 	dest->gid=0;
 }
 
-static const struct container_cached_file_entry *container_findEntry(struct container_state *container,const char *name)
+static struct container_cached_file_entry *container_findEntry(struct container_state *container,const char *name)
 {
 	struct container_cached_file_entry *entry;
 	const char *name1,*name2;
@@ -185,7 +185,7 @@ int container_fileRead(void *_container,void *dest,const char *name,uint32_t len
 {
 	struct container_combined_state *combined=(struct container_combined_state*)_container;
 	struct container_state *container=&combined->container;
-	const struct container_cached_file_entry *entry;
+	struct container_cached_file_entry *entry;
 	const char *name1,*name2;
 	int fileLoaded;
 

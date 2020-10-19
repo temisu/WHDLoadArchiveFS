@@ -39,7 +39,7 @@
 /*
    Reads level0, level1 and level2 headers
    Parses filenote out of filename (if amiga archive) for level0, level1
-   Expected types of lh0, lh5 and lhd
+   Expected methods: lh0, lhd
    Does not process any fancy stuff f.e. symlinks
    Will return error on files are not conforming to these rules
 
@@ -56,6 +56,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	struct container_cached_file_entry *entry;
 	uint8_t *stringSpace;
 
+	*dest=0;
 	if ((ret=container_common_simpleRead(hdr,HDR_L0_SIZE,offset,container))<0) return ret;
 
 	/* Basic stuff */
@@ -71,7 +72,10 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	/* Amiga does not use -lhd- method for empty directories at any level, but we can still support it */
 	isDir=0;
 	if (hdr[HDR_L0_OFFSET_METHOD+3]=='d') isDir=1;
+/* until we support compression... */
+#if 0
 		else if (hdr[HDR_L0_OFFSET_METHOD+3]=='5') dataType=1;
+#endif
 			else if (hdr[HDR_L0_OFFSET_METHOD+3]=='0') dataType=0;
 				else return CONTAINER_ERROR_UNSUPPORTED_FORMAT;
 
@@ -233,7 +237,8 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 		}
 	}
 
-	if (nameLength) if ((ret=container_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
+	if (nameLength)
+		if ((ret=container_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
 	if (noteLength)
 	{
 		/* lets make level2 look like level0-1 filenote. it is easier this way, although it requires string search later
@@ -342,7 +347,7 @@ static int container_lha_parse_entry(struct container_cached_file_entry **dest,s
 	return offset+packedLength;
 }
 
-static int container_lha_fileOpen(struct container_file_state *file_state,const struct container_cached_file_entry *entry)
+static int container_lha_fileOpen(struct container_file_state *file_state,struct container_cached_file_entry *entry)
 {
 	file_state->state.lha.entry=entry;
 	return 0;
@@ -370,7 +375,11 @@ int container_lha_initialize(struct container_state *container)
 	while (offset+1<container->fileLength)
 	{
 		offset=container_lha_parse_entry(&entry,container,offset);
-		if (offset<0) return offset;
+		if (offset<0)
+		{
+			if (entry) container_free(entry);
+			return offset;
+		}
 		container_common_insertFileEntry(container,entry);
 	}
 	container->fileOpen=container_lha_fileOpen;
