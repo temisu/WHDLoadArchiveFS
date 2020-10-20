@@ -1,6 +1,6 @@
 # WHDLoadContainers - proposed addition for WHDLoad
 
-This is work in progres proposal to add support for loading games directly from archives to WHDLoad. This is where the project name is coming from: the archive file would be the "container" for all of the read only games files.
+This is work in progress proposal to add support for loading games directly from archives to WHDLoad. This is where the project name is coming from: the archive file would be the "container" for all of the read only games files.
 
 Please note that this is not a patch for WHDLoad! In itself this codebase does nothing - it is intended to be taken in from source and then build into the WHDLoad executable, if possible.
 
