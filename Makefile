@@ -21,3 +21,9 @@ $(PROG): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(PROG) *~ */*~
+
+run_tests: $(PROG)
+	@./testing/run_test.sh testing/test1.txt
+	@./testing/run_test.sh testing/test2.txt
+	@./testing/run_test.sh testing/test3.txt
+	@./testing/run_test.sh testing/test4.txt
