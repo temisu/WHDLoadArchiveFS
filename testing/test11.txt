@@ -1,0 +1,11 @@
+DESCRIPTION:
+Test lha readFile not exist
+--END
+PARAMS:
+read testing/test_files/test_lh0.lha TemplosSagradosHD/nofile
+--END
+OUTPUT:
+-------------------------------------------------------------------------------
+Read:
+container_getFileSize() failed with code -4
+--END

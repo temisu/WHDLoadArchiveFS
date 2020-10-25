@@ -27,3 +27,11 @@ run_tests: $(PROG)
 	@./testing/run_test.sh testing/test2.txt
 	@./testing/run_test.sh testing/test3.txt
 	@./testing/run_test.sh testing/test4.txt
+	@./testing/run_test.sh testing/test5.txt
+	@./testing/run_test.sh testing/test6.txt
+	@./testing/run_test.sh testing/test7.txt
+	@./testing/run_test.sh testing/test8.txt
+	@./testing/run_test.sh testing/test9.txt
+	@./testing/run_test.sh testing/test10.txt
+	@./testing/run_test.sh testing/test11.txt
+	@./testing/run_test.sh testing/test12.txt

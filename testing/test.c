@@ -57,11 +57,20 @@ static int allocatedFileCount=0;
 static void *allocatedFiles[1000];
 static const char *allocatedFilenames[1000];
 static void *container;
+int toProcess,toSkip;
 
 static void *test_allocFunc(const char *name,uint32_t length)
 {
 	void *ret;
 	uint32_t verify;
+
+	if (!toProcess) return 0;
+	if (toSkip)
+	{
+		toSkip--;
+		return (void*)-1;
+	}
+	toProcess--;
 
 	/* test that different part of the APIs return same info */
 	verify=container_getFileSize(container,name);
@@ -82,29 +91,43 @@ int main(int argc,char **argv)
 	int ret,i,j,length;
 	void *verify;
 
-	if (argc!=2)
+	if (argc<3)
 	{
-		printf("no (single) archive file defined as a command line parameter\n");
+		printf("no command or no archive file defined as a command line parameter\n");
 		return 0;
 	}
 
 
-	ret=container_initialize(&container,argv[1]);
-	if (ret) printf("container_initialize failed with code %d\n",ret);
-	if (!ret)
+	ret=container_initialize(&container,argv[2]);
+	if (ret)
 	{
-		printf("\ncontainer '%s' opened...\n\n",argv[1]);
-
+		printf("container_initialize failed with code %d\n",ret);
+		return 0;
+	}
+	if (!strcmp(argv[1],"filecache"))
+	{
+		toProcess=1000;
+		toSkip=0;
+		if (argc>=5)
+		{
+			toProcess=atoi(argv[3]);
+			toSkip=atoi(argv[4]);
+		}
 		printf("-------------------------------------------------------------------------------\n");
-		printf("fileCache:\n");
+		printf("FileCache:\n");
 		ret=container_fileCache(container,test_allocFunc);
-		if (ret) printf("container_fileCache failed with code %d\n",ret);
+		if (ret)
+		{
+			printf("container_fileCache failed with code %d\n",ret);
+			return 0;
+		}
 		for (i=0;i<allocatedFileCount;i++)
 		{
 			length=container_getFileSize(container,allocatedFilenames[i]);
 			if (length<0)
 			{
 				printf("getFileSize failed with code %d\n",length);
+				return 0;
 			} else {
 				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
 				verify=malloc(length);
@@ -115,21 +138,47 @@ int main(int argc,char **argv)
 					if (((char*)verify)[j]!=((char*)allocatedFiles[i])[j])
 					{
 						printf("verify failed for file %s\n",allocatedFilenames[i]);
-						break;
+						return 0;
 					}
 				}
 				free(verify);
 			}
 			free(allocatedFiles[i]);
 		}
-
+		printf("-------------------------------------------------------------------------------\n");
+	} else if (!strcmp(argv[1],"examine")) {
 		printf("-------------------------------------------------------------------------------\n");
 		printf("Examine:\n");
 		ret=container_examine(container,test_registerFunc);
-		if (ret) printf("container_examine failed with code %d\n",ret);
-
+		if (ret)
+		{
+			printf("container_examine failed with code %d\n",ret);
+			return 0;
+		}
 		printf("-------------------------------------------------------------------------------\n");
-		container_uninitialize(container);
+	} else if (!strcmp(argv[1],"read")) {
+		if (argc<4) return 0;
+		printf("-------------------------------------------------------------------------------\n");
+		printf("Read:\n");
+		length=container_getFileSize(container,argv[3]);
+		if (length<0)
+		{
+			printf("container_getFileSize() failed with code %d\n",length);
+			return 0;
+		}
+		verify=malloc(length);
+		ret=container_fileRead(container,verify,argv[3],length,0);
+		if (ret!=length)
+		{
+			printf("container_fileRead failed with code %d\n",ret);
+			return 0;
+		}
+		printf("CRC for '%s': 0x%08x\n",argv[3],CRC32(verify,length));
+		free(verify);
+		printf("-------------------------------------------------------------------------------\n");
+	} else {
+		return -1;
 	}
+	container_uninitialize(container);
 	return 0;
 }

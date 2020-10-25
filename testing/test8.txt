@@ -1,0 +1,57 @@
+DESCRIPTION:
+Test full uncompressed lha level2 examine
+--END
+PARAMS:
+examine testing/test_files/test_lh2.lha
+--END
+OUTPUT:
+-------------------------------------------------------------------------------
+Examine:
+Directory 'TemplosSagradosHD'
+Adventure Planner Coba.jpg 324123 h---rwed 26-Dec-07 13:12:50
+Directory 'TemplosSagradosHD'
+Adventure Planner Tulum.jpg 316655 ----rwed 26-Dec-07 13:13:10
+Directory 'TemplosSagradosHD/dir3'
+dir4                        Dir ----rwed 20-Oct-20 23:18:58
+Directory 'TemplosSagradosHD/dir3'
+dir5                        Dir ----rwed 20-Oct-20 23:19:18
+Directory 'TemplosSagradosHD'
+empty1                      Dir ----rwed 20-Oct-20 23:16:28
+Directory 'TemplosSagradosHD'
+empty2                      Dir ----rwed 20-Oct-20 23:16:38
+: comment2
+Directory 'TemplosSagradosHD'
+Install                   36141 -s--rwed 10-Aug-12 10:41:36
+Directory 'TemplosSagradosHD'
+Install.info                720 ----rw-d 10-Aug-12 10:20:26
+Directory 'TemplosSagradosHD'
+Los Templos Sagrados.inf   1886 --p-rw-d 31-Jul-12 12:39:52
+Directory 'TemplosSagradosHD'
+Los Templos Sagrados.newicon  12948 ----rwed 26-Aug-12 01:49:48
+Directory 'TemplosSagradosHD'
+Los Templos Sagrados.slave   4492 ----rwed 06-Aug-12 13:13:22
+Directory 'TemplosSagradosHD'
+Manual                    16296 ----rwed 09-Aug-12 19:25:36
+Directory 'TemplosSagradosHD'
+Manual.info                1396 ----rw-d 10-Aug-12 10:20:26
+Directory 'TemplosSagradosHD'
+Map Coba.jpg             326747 ----rwed 26-Dec-07 13:10:12
+Directory 'TemplosSagradosHD'
+Map Tulum.jpg            339722 ----rwed 26-Dec-07 13:10:34
+Directory 'TemplosSagradosHD'
+null_file                     0 ----rwed 20-Oct-20 23:20:14
+Directory 'TemplosSagradosHD'
+ReadMe                     3583 ----rwe- 26-Aug-12 15:18:50
+: readme_comment
+Directory 'TemplosSagradosHD'
+ReadMe.info                1392 ----rw-d 10-Aug-12 10:20:26
+Directory 'TemplosSagradosHD'
+Solution                  20498 ----r-ed 09-Aug-12 18:46:54
+Directory 'TemplosSagradosHD'
+Solution.info              1396 ----rw-d 10-Aug-12 10:20:26
+Directory 'TemplosSagradosHD/src'
+Los Templos Sagrados.asm  11260 ----rwed 08-Aug-12 10:09:16
+Directory 'TemplosSagradosHD'
+system-configuration        232 ---arwed 08-Aug-12 10:22:40
+-------------------------------------------------------------------------------
+--END

@@ -1,0 +1,12 @@
+DESCRIPTION:
+Test lha readFile
+--END
+PARAMS:
+read testing/test_files/test_lh0.lha TemplosSagradosHD/Manual
+--END
+OUTPUT:
+-------------------------------------------------------------------------------
+Read:
+CRC for 'TemplosSagradosHD/Manual': 0xfe753eaa
+-------------------------------------------------------------------------------
+--END
