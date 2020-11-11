@@ -3,10 +3,6 @@
 #ifndef CONTAINER_LHA_H
 #define CONTAINER_LHA_H
 
-struct container_lha_state
-{
-};
-
 struct container_lha_file_state
 {
 	const struct container_cached_file_entry	*entry;

@@ -27,7 +27,9 @@ typedef unsigned char uint8_t;
 /*
    Define this and the code tries to open non-amiga archives as well
 */
-//#define CONTAINER_ALLOW_NON_AMIGA_ARCHIVES 1
+/*
+#define CONTAINER_ALLOW_NON_AMIGA_ARCHIVES 1
+*/
 
 /*
    Error codes returned by the container_* functions
