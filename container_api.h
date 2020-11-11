@@ -107,7 +107,7 @@ extern int container_uninitialize(void *container);
 	* CONTAINER_ERROR_FILE_NOT_FOUND - file does not exist
 	* CONTAINER_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
-extern int container_getFileSize(void *container,const char *name);
+extern int32_t container_getFileSize(void *container,const char *name);
 
 /*
    Read (chosen) files into fileCache.
@@ -154,6 +154,15 @@ extern int container_examine(void *container,container_registerEntry registerFun
 	* CONTAINER_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 	* CONTAINER_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
-extern int container_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
+extern int32_t container_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
+
+/*
+   Returns description for error code
+   Parameters:
+	* error_code error to be queried
+   Returns:
+        * Pointer to a string for the error description
+*/
+extern const char *container_getErrorString(int error_code);
 
 #endif

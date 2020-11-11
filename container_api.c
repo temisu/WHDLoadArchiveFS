@@ -122,7 +122,7 @@ int container_uninitialize(void *_container)
 	return 0;
 }
 
-int container_getFileSize(void *_container,const char *name)
+int32_t container_getFileSize(void *_container,const char *name)
 {
 	const struct container_cached_file_entry *entry;
 	struct container_state *container=&((struct container_combined_state*)_container)->container;
@@ -181,7 +181,7 @@ int container_examine(void *_container,container_registerEntry registerFunc)
 	return 0;
 }
 
-int container_fileRead(void *_container,void *dest,const char *name,uint32_t length,uint32_t offset)
+int32_t container_fileRead(void *_container,void *dest,const char *name,uint32_t length,uint32_t offset)
 {
 	struct container_combined_state *combined=(struct container_combined_state*)_container;
 	struct container_state *container=&combined->container;
@@ -212,4 +212,24 @@ int container_fileRead(void *_container,void *dest,const char *name,uint32_t len
 		entry=combined->currentFile;
 	}
 	return container_fileReadRaw(combined,dest,entry,length,offset);
+}
+
+static const char *container_errors[]={
+	"no error",
+	"Invalid input file format",
+	"Unsupported input file format",
+	"Memory allocation failed",
+	"File not found",
+	"Unsupported input file format (non Amiga archive)",
+	"Invalid file type",
+	"Decompression failure",
+	"Invalid read parameters"
+	"Unknown error"};
+
+const char *container_getErrorString(int error_code)
+{
+	if (error_code<0) error_code=-error_code;
+		else error_code=0;
+	if (error_code>9) error_code=9;
+	return container_errors[error_code];
 }

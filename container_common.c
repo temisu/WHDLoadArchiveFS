@@ -3,9 +3,9 @@
 #include "container_private.h"
 #include "container_integration.h"
 
-int container_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct container_state *container)
+int32_t container_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct container_state *container)
 {
-	int ret=container_integration_fileRead(dest,length,offset,container->file);
+	int32_t ret=container_integration_fileRead(dest,length,offset,container->file);
 	if (ret<0) return ret;
 	if (ret!=length) return CONTAINER_ERROR_INVALID_FORMAT;
 	return ret;

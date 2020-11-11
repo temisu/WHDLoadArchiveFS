@@ -68,7 +68,7 @@ static int container_zip_fileOpen(struct container_file_state *file_state,struct
 	return 0;
 }
 
-static int container_zip_fileRead(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset)
+static int32_t container_zip_fileRead(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset)
 {
 	/* does not check file type */
 	struct container_cached_file_entry *entry;
