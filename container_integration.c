@@ -28,7 +28,7 @@ int container_integration_fileClose(void *file)
 	return 0;
 }
 
-int container_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file)
+int32_t container_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file)
 {
 	int fd=(int)file;
 	int ret=lseek(fd,offset,SEEK_SET);

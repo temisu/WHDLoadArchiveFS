@@ -51,6 +51,6 @@ extern int container_integration_fileClose(void *file);
 	* bytes read if succesfull - it is expected that length bytes is returned i.e. no partial reads
 	* negative values in case of errors - these negative values are passed through on container_* functions are their return values
 */
-extern int container_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file);
+extern int32_t container_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file);
 
 #endif

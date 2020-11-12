@@ -1,6 +1,7 @@
 /* Copyright (C) Teemu Suutari */
 
 #include "container_api.h"
+#include "container_integration.h"
 #include "testing/CRC32.h"
 
 #include <stdio.h>
@@ -30,6 +31,9 @@ static const char *monthNames[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Au
 
 static void printFIB(const struct FIB *fib)
 {
+
+	struct tm *tm;
+	time_t time;
 	int i,len=strlen((char*)fib->filename);
 	printf("%s",fib->filename);
 	while (len++<24) printf(" ");
@@ -38,9 +42,9 @@ static void printFIB(const struct FIB *fib)
 	for (i=7;i>=0;i--)
 		printf("%c",((fib->protection^0xf)&(1<<i))?protectionLetters[i]:'-');
 
-	time_t time=(fib->mtimeDays+2922)*86400+fib->mtimeMinutes*60+fib->mtimeTicks/50;
-	struct tm *tm=gmtime(&time);
-	printf(" %02u-%s-%02u %02u:%02u:%02u\n",tm->tm_mday,monthNames[tm->tm_mon],tm->tm_year%100,tm->tm_hour,tm->tm_min,tm->tm_sec);
+	time=(fib->mtimeDays+2922)*86400+fib->mtimeMinutes*60+fib->mtimeTicks/50;
+	tm=gmtime(&time);
+	printf(" %02d-%s-%02d %02d:%02d:%02d\n",tm->tm_mday,monthNames[tm->tm_mon],tm->tm_year%100,tm->tm_hour,tm->tm_min,tm->tm_sec);
 	if (*fib->comment)
 		printf(": %s\n",fib->comment);
 }
@@ -76,11 +80,11 @@ static void *test_allocFunc(const char *name,uint32_t length)
 	verify=container_getFileSize(container,name);
 	if (verify!=length)
 	{
-		printf("container_getFileSize returned wrong answer %d (should be %d)\n",verify,length);
+		printf("container_getFileSize returned wrong answer %u (should be %u)\n",verify,length);
 	}
 
 	printf("File '%s', Length %u\n",name,length);
-	ret=malloc(length);
+	ret=container_malloc(length);
 	allocatedFilenames[allocatedFileCount]=name;
 	allocatedFiles[allocatedFileCount++]=ret;
 	return ret;
@@ -130,7 +134,7 @@ int main(int argc,char **argv)
 				return 0;
 			} else {
 				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
-				verify=malloc(length);
+				verify=container_malloc(length);
 				ret=container_fileRead(container,verify,allocatedFilenames[i],length,0);
 				if (ret!=length) printf("container_fileRead failed with code %d\n",ret);
 				for (j=0;j<length;j++)
@@ -141,9 +145,9 @@ int main(int argc,char **argv)
 						return 0;
 					}
 				}
-				free(verify);
+				container_free(verify);
 			}
-			free(allocatedFiles[i]);
+			container_free(allocatedFiles[i]);
 		}
 		printf("-------------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"examine")) {
@@ -166,7 +170,7 @@ int main(int argc,char **argv)
 			printf("container_getFileSize() failed with code %d\n",length);
 			return 0;
 		}
-		verify=malloc(length);
+		verify=container_malloc(length);
 		ret=container_fileRead(container,verify,argv[3],length,0);
 		if (ret!=length)
 		{
@@ -174,7 +178,7 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		printf("CRC for '%s': 0x%08x\n",argv[3],CRC32(verify,length));
-		free(verify);
+		container_free(verify);
 		printf("-------------------------------------------------------------------------------\n");
 	} else {
 		return -1;

@@ -4,7 +4,7 @@
 #include "container_integration.h"
 #include "container_common.h"
 
-static int container_fileReadRaw(struct container_combined_state *combined,void *dest,struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
+static int32_t container_fileReadRaw(struct container_combined_state *combined,void *dest,struct container_cached_file_entry *entry,uint32_t length,uint32_t offset)
 {
 	int ret;
 	struct container_state *container=&combined->container;
@@ -87,17 +87,23 @@ int container_initialize(void **_container,const char *filename)
 		combinedState->container.firstEntry=0;
 		combinedState->container.lastEntry=0;
 		combinedState->currentFile=0;
-		ret=container_integration_fileRead(hdr,3,2,combinedState->container.file);
-		if (ret>=0 && ret!=3) ret=CONTAINER_ERROR_INVALID_FORMAT;
 	} else {
 		combinedState->container.file=0;
 	}
 
-	/* although not good enough for the generic case, this works for amiga lha/zip archives */
-	if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=container_lha_initialize(&combinedState->container);
-		else ret=container_zip_initialize(&combinedState->container);
+	if (!ret)
+	{
+		/* although not good enough for the generic case, this works for amiga lha/zip archives */
+		ret=container_integration_fileRead(hdr,3,2,combinedState->container.file);
+		if (ret>=0 && ret!=3) ret=CONTAINER_ERROR_INVALID_FORMAT;
+		else
+		{
+			if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=container_lha_initialize(&combinedState->container);
+				else ret=container_zip_initialize(&combinedState->container);
+		}
+	}
 
-	if (ret<0) container_uninitialize(combinedState);
+	if (ret) container_uninitialize(combinedState);
 	*_container=ret?0:combinedState;
 	return ret;
 }
@@ -138,7 +144,7 @@ int32_t container_getFileSize(void *_container,const char *name)
 int container_fileCache(void *_container,container_allocFile fileFunc)
 {
 	void *ptr;
-	int ret;
+	int32_t ret;
 	struct container_cached_file_entry *tmp;
 	struct container_combined_state *combined=(struct container_combined_state*)_container;
 	struct container_state *container=&combined->container;
