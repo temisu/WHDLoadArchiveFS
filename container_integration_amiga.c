@@ -14,11 +14,11 @@ int container_integration_fileOpen(const char *filename,uint32_t *length,void **
 	
 	lock=Lock(filename,ACCESS_READ);
 	if (!lock)
-		return CONTAINER_ERROR_FILE_NOT_FOUND-10;
+		return CONTAINER_ERROR_FILE_NOT_FOUND;
 	success=Examine(lock,&fib);
 	UnLock(lock);
 	if (!success)
-		return CONTAINER_ERROR_FILE_NOT_FOUND-20;
+		return CONTAINER_ERROR_FILE_NOT_FOUND;
 	if (fib.fib_DirEntryType>0)
 		return CONTAINER_ERROR_INVALID_FILE_TYPE;
 
