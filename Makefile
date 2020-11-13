@@ -2,13 +2,24 @@
 
 VPATH	:= testing
 
+#TARGET := Amiga
+
+ifneq ($(TARGET), Amiga)
 CC	= clang
 CFLAGS	= -g -Wall -Werror -I.
 LDFLAGS =
+INTEGRATION_OBJ = container_integration_unix.o
+else
+export PATH := $(PATH):$(HOME)/vbcc_cross
+CC	= $(HOME)/vbcc_cross/vc
+CFLAGS	= -I.
+LDFLAGS =
+INTEGRATION_OBJ = container_integration_amiga.o
+endif
 
 PROG	= test
 
-OBJS	= container_api.o container_common.o container_integration.o container_lha.o container_zip.o \
+OBJS	= container_api.o container_common.o container_lha.o container_zip.o $(INTEGRATION_OBJ) \
 	test.o CRC32.o
 
 all: $(PROG)
