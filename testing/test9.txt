@@ -5,7 +5,7 @@ PARAMS:
 filecache testing/test_files/test.zip 3 3
 --END
 OUTPUT:
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 FileCache:
 File 'TemplosSagradosHD/src/Los Templos Sagrados.asm', Length 11260
 File 'TemplosSagradosHD/Solution.info', Length 1396
@@ -13,5 +13,5 @@ File 'TemplosSagradosHD/Solution', Length 20498
 CRC for 'TemplosSagradosHD/src/Los Templos Sagrados.asm': 0x0aa5316e
 CRC for 'TemplosSagradosHD/Solution.info': 0x1009efca
 CRC for 'TemplosSagradosHD/Solution': 0x484a67fb
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 --END

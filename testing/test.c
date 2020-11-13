@@ -92,7 +92,7 @@ static void *test_allocFunc(const char *name,uint32_t length)
 
 int main(int argc,char **argv)
 {
-	int ret,i,j,length;
+	int32_t ret,i,j,length;
 	void *verify;
 
 	if (argc<3)
@@ -105,7 +105,7 @@ int main(int argc,char **argv)
 	ret=container_initialize(&container,argv[2]);
 	if (ret)
 	{
-		printf("container_initialize failed with code %d\n",ret);
+		printf("container_initialize failed with code %d (%s)\n",ret,container_getErrorString(ret));
 		return 0;
 	}
 	if (!strcmp(argv[1],"filecache"))
@@ -117,12 +117,12 @@ int main(int argc,char **argv)
 			toProcess=atoi(argv[3]);
 			toSkip=atoi(argv[4]);
 		}
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 		printf("FileCache:\n");
 		ret=container_fileCache(container,test_allocFunc);
 		if (ret)
 		{
-			printf("container_fileCache failed with code %d\n",ret);
+			printf("container_fileCache failed with code %d (%s)\n",ret,container_getErrorString(ret));
 			return 0;
 		}
 		for (i=0;i<allocatedFileCount;i++)
@@ -130,7 +130,7 @@ int main(int argc,char **argv)
 			length=container_getFileSize(container,allocatedFilenames[i]);
 			if (length<0)
 			{
-				printf("getFileSize failed with code %d\n",length);
+				printf("getFileSize failed with code %d (%s)\n",length,container_getErrorString(length));
 				return 0;
 			} else {
 				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
@@ -149,37 +149,37 @@ int main(int argc,char **argv)
 			}
 			container_free(allocatedFiles[i]);
 		}
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"examine")) {
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 		printf("Examine:\n");
 		ret=container_examine(container,test_registerFunc);
 		if (ret)
 		{
-			printf("container_examine failed with code %d\n",ret);
+			printf("container_examine failed with code %d (%s)\n",ret,container_getErrorString(ret));
 			return 0;
 		}
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"read")) {
 		if (argc<4) return 0;
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 		printf("Read:\n");
 		length=container_getFileSize(container,argv[3]);
 		if (length<0)
 		{
-			printf("container_getFileSize() failed with code %d\n",length);
+			printf("container_getFileSize() failed with code %d (%s)\n",length,container_getErrorString(length));
 			return 0;
 		}
 		verify=container_malloc(length);
 		ret=container_fileRead(container,verify,argv[3],length,0);
 		if (ret!=length)
 		{
-			printf("container_fileRead failed with code %d\n",ret);
+			printf("container_fileRead failed with code %d %s\n",ret,container_getErrorString(ret));
 			return 0;
 		}
 		printf("CRC for '%s': 0x%08x\n",argv[3],CRC32(verify,length));
 		container_free(verify);
-		printf("-------------------------------------------------------------------------------\n");
+		printf("----------------------------------------------------------------------------\n");
 	} else {
 		return -1;
 	}

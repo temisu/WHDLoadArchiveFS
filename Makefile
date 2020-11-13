@@ -2,7 +2,7 @@
 
 VPATH	:= testing
 
-#TARGET := Amiga
+TARGET := Amiga
 
 ifneq ($(TARGET), Amiga)
 CC	= clang

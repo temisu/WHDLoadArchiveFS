@@ -5,7 +5,7 @@ PARAMS:
 filecache testing/test_files/test.zip
 --END
 OUTPUT:
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 FileCache:
 File 'TemplosSagradosHD/null_file', Length 0
 File 'TemplosSagradosHD/ReadMe', Length 3583
@@ -43,5 +43,5 @@ CRC for 'TemplosSagradosHD/Install.info': 0xd7163e2b
 CRC for 'TemplosSagradosHD/Install': 0xba016bf3
 CRC for 'TemplosSagradosHD/Adventure Planner Tulum.jpg': 0x6b00883d
 CRC for 'TemplosSagradosHD/Adventure Planner Coba.jpg': 0x9af11013
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 --END

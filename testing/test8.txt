@@ -5,7 +5,7 @@ PARAMS:
 examine testing/test_files/test_lh2.lha
 --END
 OUTPUT:
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 Examine:
 Directory 'TemplosSagradosHD'
 Adventure Planner Coba.jpg 324123 h---rwed 26-Dec-07 13:12:50
@@ -53,5 +53,5 @@ Directory 'TemplosSagradosHD/src'
 Los Templos Sagrados.asm  11260 ----rwed 08-Aug-12 10:09:16
 Directory 'TemplosSagradosHD'
 system-configuration        232 ---arwed 08-Aug-12 10:22:40
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 --END
