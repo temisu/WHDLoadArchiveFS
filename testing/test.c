@@ -1,7 +1,7 @@
 /* Copyright (C) Teemu Suutari */
 
-#include "container_api.h"
-#include "container_integration.h"
+#include "archivefs_api.h"
+#include "archivefs_integration.h"
 #include "testing/CRC32.h"
 
 #include <stdio.h>
@@ -77,14 +77,14 @@ static void *test_allocFunc(const char *name,uint32_t length)
 	toProcess--;
 
 	/* test that different part of the APIs return same info */
-	verify=container_getFileSize(container,name);
+	verify=archivefs_getFileSize(container,name);
 	if (verify!=length)
 	{
-		printf("container_getFileSize returned wrong answer %u (should be %u)\n",verify,length);
+		printf("archivefs_getFileSize returned wrong answer %u (should be %u)\n",verify,length);
 	}
 
 	printf("File '%s', Length %u\n",name,length);
-	ret=container_malloc(length);
+	ret=archivefs_malloc(length);
 	allocatedFilenames[allocatedFileCount]=name;
 	allocatedFiles[allocatedFileCount++]=ret;
 	return ret;
@@ -102,10 +102,10 @@ int main(int argc,char **argv)
 	}
 
 
-	ret=container_initialize(&container,argv[2]);
+	ret=archivefs_initialize(&container,argv[2]);
 	if (ret)
 	{
-		printf("container_initialize failed with code %d (%s)\n",ret,container_getErrorString(ret));
+		printf("archivefs_initialize failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 		return 0;
 	}
 	if (!strcmp(argv[1],"filecache"))
@@ -119,24 +119,24 @@ int main(int argc,char **argv)
 		}
 		printf("----------------------------------------------------------------------------\n");
 		printf("FileCache:\n");
-		ret=container_fileCache(container,test_allocFunc);
+		ret=archivefs_fileCache(container,test_allocFunc);
 		if (ret)
 		{
-			printf("container_fileCache failed with code %d (%s)\n",ret,container_getErrorString(ret));
+			printf("archivefs_fileCache failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 			return 0;
 		}
 		for (i=0;i<allocatedFileCount;i++)
 		{
-			length=container_getFileSize(container,allocatedFilenames[i]);
+			length=archivefs_getFileSize(container,allocatedFilenames[i]);
 			if (length<0)
 			{
-				printf("getFileSize failed with code %d (%s)\n",length,container_getErrorString(length));
+				printf("getFileSize failed with code %d (%s)\n",length,archivefs_getErrorString(length));
 				return 0;
 			} else {
 				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
-				verify=container_malloc(length);
-				ret=container_fileRead(container,verify,allocatedFilenames[i],length,0);
-				if (ret!=length) printf("container_fileRead failed with code %d\n",ret);
+				verify=archivefs_malloc(length);
+				ret=archivefs_fileRead(container,verify,allocatedFilenames[i],length,0);
+				if (ret!=length) printf("archivefs_fileRead failed with code %d\n",ret);
 				for (j=0;j<length;j++)
 				{
 					if (((char*)verify)[j]!=((char*)allocatedFiles[i])[j])
@@ -145,18 +145,18 @@ int main(int argc,char **argv)
 						return 0;
 					}
 				}
-				container_free(verify);
+				archivefs_free(verify);
 			}
-			container_free(allocatedFiles[i]);
+			archivefs_free(allocatedFiles[i]);
 		}
 		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"examine")) {
 		printf("----------------------------------------------------------------------------\n");
 		printf("Examine:\n");
-		ret=container_examine(container,test_registerFunc);
+		ret=archivefs_examine(container,test_registerFunc);
 		if (ret)
 		{
-			printf("container_examine failed with code %d (%s)\n",ret,container_getErrorString(ret));
+			printf("archivefs_examine failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 			return 0;
 		}
 		printf("----------------------------------------------------------------------------\n");
@@ -164,25 +164,25 @@ int main(int argc,char **argv)
 		if (argc<4) return 0;
 		printf("----------------------------------------------------------------------------\n");
 		printf("Read:\n");
-		length=container_getFileSize(container,argv[3]);
+		length=archivefs_getFileSize(container,argv[3]);
 		if (length<0)
 		{
-			printf("container_getFileSize() failed with code %d (%s)\n",length,container_getErrorString(length));
+			printf("archivefs_getFileSize() failed with code %d (%s)\n",length,archivefs_getErrorString(length));
 			return 0;
 		}
-		verify=container_malloc(length);
-		ret=container_fileRead(container,verify,argv[3],length,0);
+		verify=archivefs_malloc(length);
+		ret=archivefs_fileRead(container,verify,argv[3],length,0);
 		if (ret!=length)
 		{
-			printf("container_fileRead failed with code %d %s\n",ret,container_getErrorString(ret));
+			printf("archivefs_fileRead failed with code %d %s\n",ret,archivefs_getErrorString(ret));
 			return 0;
 		}
 		printf("CRC for '%s': 0x%08x\n",argv[3],CRC32(verify,length));
-		container_free(verify);
+		archivefs_free(verify);
 		printf("----------------------------------------------------------------------------\n");
 	} else {
 		return -1;
 	}
-	container_uninitialize(container);
+	archivefs_uninitialize(container);
 	return 0;
 }

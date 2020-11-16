@@ -1,7 +1,7 @@
 /* Copyright (C) Teemu Suutari */
 
-#ifndef CONTAINER_API_H
-#define CONTAINER_API_H
+#ifndef ARCHIVEFS_API_H
+#define ARCHIVEFS_API_H
 
 
 /*
@@ -28,37 +28,37 @@ typedef unsigned char uint8_t;
    Define this and the code tries to open non-amiga archives as well
 */
 /*
-#define CONTAINER_ALLOW_NON_AMIGA_ARCHIVES 1
+#define ARCHIVEFS_ALLOW_NON_AMIGA_ARCHIVES 1
 */
 
 /*
-   Error codes returned by the container_* functions
+   Error codes returned by the archivefs_* functions
 */
-#define CONTAINER_ERROR_INVALID_FORMAT (-1)
-#define CONTAINER_ERROR_UNSUPPORTED_FORMAT (-2)
-#define CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED (-3)
-#define CONTAINER_ERROR_FILE_NOT_FOUND (-4)
-#define CONTAINER_ERROR_NON_AMIGA_ARCHIVE (-5)
-#define CONTAINER_ERROR_INVALID_FILE_TYPE (-6)
-#define CONTAINER_ERROR_DECOMPRESSION_ERROR (-7)
-#define CONTAINER_ERROR_INVALID_READ (-8)
+#define ARCHIVEFS_ERROR_INVALID_FORMAT (-1)
+#define ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT (-2)
+#define ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED (-3)
+#define ARCHIVEFS_ERROR_FILE_NOT_FOUND (-4)
+#define ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE (-5)
+#define ARCHIVEFS_ERROR_INVALID_FILE_TYPE (-6)
+#define ARCHIVEFS_ERROR_DECOMPRESSION_ERROR (-7)
+#define ARCHIVEFS_ERROR_INVALID_READ (-8)
 
 /* callback functions for the API */
 
 /*
-   container_allocFile will be called by container_fileCache for each file in the container.
+   archivefs_allocFile will be called by archivefs_fileCache for each file in the container.
    Parameters:
 	* name - name of the file, including path
 	* length - length of the file
    Returns:
-	* null - when no more files are wanted. i.e. terminate the container_fileCache
+	* null - when no more files are wanted. i.e. terminate the archivefs_fileCache
 	* -1 casted as void* - skip this file
 	* any other pointer - allocated buffer of at least file length where the file is requested to read into
 */
-typedef void *(*container_allocFile)(const char *name,uint32_t length);
+typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 
 /*
-   container_registerEntry will be calles by container_examine for each entry in the container
+   archivefs_registerEntry will be calles by archivefs_examine for each entry in the container
    Parameters:
 	* path - path of the file
 	* fib - pointer to the 232-byte fib structure for the entry
@@ -66,7 +66,7 @@ typedef void *(*container_allocFile)(const char *name,uint32_t length);
 	* 0 - stop processing further entries
 	* -1 (or any nonzero value) - continue processing
 */
-typedef int (*container_registerEntry)(const char *path,const void *fib);
+typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
 
 
 /* API */
@@ -79,13 +79,13 @@ typedef int (*container_registerEntry)(const char *path,const void *fib);
    Returns:
 	* error code or 0 if success. In case error occured all allocated memory is freed
    Notable error codes:
-	* Pass through errors from container_integration
-	* CONTAINER_ERROR_INVALID_FORMAT - file could not be parsed
-	* CONTAINER_ERROR_UNSUPPORTED_FORMAT - file format not supported
-	* CONTAINER_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
-	* CONTAINER_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
+	* Pass through errors from archivefs_integration
+	* ARCHIVEFS_ERROR_INVALID_FORMAT - file could not be parsed
+	* ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT - file format not supported
+	* ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
+	* ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */
-extern int container_initialize(void **container,const char *filename);
+extern int archivefs_initialize(void **container,const char *filename);
 
 /*
    Uninitialize container. frees all memory
@@ -96,7 +96,7 @@ extern int container_initialize(void **container,const char *filename);
    Notable error codes:
 	* none
 */
-extern int container_uninitialize(void *container);
+extern int archivefs_uninitialize(void *container);
 
 /*
    Get file size. Does not allocate memory
@@ -106,25 +106,25 @@ extern int container_uninitialize(void *container);
    Returns:
 	* error code or file size if success
    Notable error codes:
-	* CONTAINER_ERROR_FILE_NOT_FOUND - file does not exist
-	* CONTAINER_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
+	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
+	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
-extern int32_t container_getFileSize(void *container,const char *name);
+extern int32_t archivefs_getFileSize(void *container,const char *name);
 
 /*
    Read (chosen) files into fileCache.
    Does not allocate memory
-   container_fileCache will call container_allocFile for each file in the container and if the function returns with a valid pointer
-   file contents are read to it. container_fileCache is cant be called in parallel to container_fileRead in scope of same container
+   archivefs_fileCache will call archivefs_allocFile for each file in the container and if the function returns with a valid pointer
+   file contents are read to it. archivefs_fileCache is cant be called in parallel to archivefs_fileRead in scope of same container
    Parameters:
 	* fileFunc - function to call for each file
    Returns:
 	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
    Notable error codes:
-	* Pass through errors from container_integration
-	* CONTAINER_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* Pass through errors from archivefs_integration
+	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 */
-extern int container_fileCache(void *container,container_allocFile fileFunc);
+extern int archivefs_fileCache(void *container,archivefs_allocFile fileFunc);
 
 /*
    Query FIB of all the entries in the container.
@@ -136,7 +136,7 @@ extern int container_fileCache(void *container,container_allocFile fileFunc);
    Notable error codes:
 	* none
 */
-extern int container_examine(void *container,container_registerEntry registerFunc);
+extern int archivefs_examine(void *container,archivefs_registerEntry registerFunc);
 
 /*
    Read a file
@@ -150,13 +150,13 @@ extern int container_examine(void *container,container_registerEntry registerFun
    Returns:
 	* error code or bytes read if success.
    Notable error codes:
-	* Pass through errors from container_integration
-	* CONTAINER_ERROR_FILE_NOT_FOUND - file does not exist
-	* CONTAINER_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
-	* CONTAINER_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
-	* CONTAINER_ERROR_INVALID_READ - offset and/or length is not valid for this file
+	* Pass through errors from archivefs_integration
+	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
+	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
+	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* ARCHIVEFS_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
-extern int32_t container_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
+extern int32_t archivefs_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
 
 /*
    Returns description for error code
@@ -165,6 +165,6 @@ extern int32_t container_fileRead(void *container,void *dest,const char *name,ui
    Returns:
         * Pointer to a string for the error description
 */
-extern const char *container_getErrorString(int error_code);
+extern const char *archivefs_getErrorString(int error_code);
 
 #endif

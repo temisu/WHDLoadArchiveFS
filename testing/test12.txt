@@ -7,5 +7,5 @@ read testing/test_files/test_lh0.lha TemplosSagradosHD/empty1
 OUTPUT:
 ----------------------------------------------------------------------------
 Read:
-container_getFileSize() failed with code -6 (Invalid file type)
+archivefs_getFileSize() failed with code -6 (Invalid file type)
 --END

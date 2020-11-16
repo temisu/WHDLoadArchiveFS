@@ -1,24 +1,24 @@
 /* Copyright (C) Teemu Suutari */
 
-#include "container_private.h"
-#include "container_integration.h"
+#include "archivefs_private.h"
+#include "archivefs_integration.h"
 
-int32_t container_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct container_state *container)
+int32_t archivefs_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *container)
 {
-	int32_t ret=container_integration_fileRead(dest,length,offset,container->file);
+	int32_t ret=archivefs_integration_fileRead(dest,length,offset,container->file);
 	if (ret<0) return ret;
-	if (ret!=length) return CONTAINER_ERROR_INVALID_FORMAT;
+	if (ret!=length) return ARCHIVEFS_ERROR_INVALID_FORMAT;
 	return ret;
 }
 
-static int container_isLeapYear(uint32_t year)
+static int archivefs_isLeapYear(uint32_t year)
 {
 	return (!(year&3U)&&(year%100)?1:!(year%400));
 }
 
-static const uint16_t container_daysPerMonthAccum[12]={0,31,59,90,120,151,181,212,243,273,304,334};
+static const uint16_t archivefs_daysPerMonthAccum[12]={0,31,59,90,120,151,181,212,243,273,304,334};
 
-uint32_t container_common_unixTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
+uint32_t archivefs_common_unixTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
 {
 	uint32_t daysSinceEpoch;
 	/* epoch switch from 1970.1.1 to 1978.1.1 */
@@ -32,7 +32,7 @@ uint32_t container_common_unixTimeToAmiga(uint32_t timestamp,uint32_t *minutesSi
 	return daysSinceEpoch;
 }
 
-uint32_t container_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
+uint32_t archivefs_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince)
 {
 	uint32_t seconds,minutes,hours,day,month,year;
 	uint32_t daysSinceEpoch;
@@ -54,15 +54,15 @@ uint32_t container_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSin
 	printf("time %u.%u.%u %u:%u:%u\n",year,month,day,hours,minutes,seconds);
 #endif
 	/* days since 1978.1.1 */
-	daysSinceEpoch=day-1+container_daysPerMonthAccum[month-1];
-	if (month>2&&container_isLeapYear(year)) daysSinceEpoch++;
+	daysSinceEpoch=day-1+archivefs_daysPerMonthAccum[month-1];
+	if (month>2&&archivefs_isLeapYear(year)) daysSinceEpoch++;
 	/* this is slow. could be optimized, but fortunately does not really matter since the max is 127+2+1980... */
 	daysSinceEpoch+=(year-1978)*365;
 	year=(year+3)&~3U;
 	while (year>1980)
 	{
 		year-=4;
-		if (container_isLeapYear(year))
+		if (archivefs_isLeapYear(year))
 			daysSinceEpoch++;
 	}
 	*minutesSince=hours*60+minutes;
@@ -71,7 +71,7 @@ uint32_t container_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSin
 	return daysSinceEpoch;
 }
 
-void container_common_insertFileEntry(struct container_state *container,struct container_cached_file_entry *entry)
+void archivefs_common_insertFileEntry(struct archivefs_state *container,struct archivefs_cached_file_entry *entry)
 {
 	if (!container->lastEntry)
 	{

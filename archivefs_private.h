@@ -1,17 +1,17 @@
 /* Copyright (C) Teemu Suutari */
 
-#ifndef CONTAINER_PRIVATE_H
-#define CONTAINER_PRIVATE_H
+#ifndef ARCHIVEFS_PRIVATE_H
+#define ARCHIVEFS_PRIVATE_H
 
-#include "container_api.h"
-#include "container_lha.h"
-#include "container_zip.h"
+#include "archivefs_api.h"
+#include "archivefs_lha.h"
+#include "archivefs_zip.h"
 
-#define CONTAINER_TYPE_FILE (-3)
-#define CONTAINER_TYPE_DIR (2)
+#define ARCHIVEFS_TYPE_FILE (-3)
+#define ARCHIVEFS_TYPE_DIR (2)
 
 /* radically smaller than fib (depending on the length of the filename / filenote though) */
-struct container_cached_file_entry
+struct archivefs_cached_file_entry
 {
 	uint32_t				dataOffset;
 	uint32_t				dataLength;
@@ -30,45 +30,45 @@ struct container_cached_file_entry
 	char					*filename;
 	char					*filenote;
 
-	struct container_cached_file_entry	*prev;
-	struct container_cached_file_entry	*next;
+	struct archivefs_cached_file_entry	*prev;
+	struct archivefs_cached_file_entry	*next;
 };
 
 
-struct container_state;
+struct archivefs_state;
 
-struct container_file_state
+struct archivefs_file_state
 {
-	struct container_state			*container;
+	struct archivefs_state			*container;
 
 	union
 	{
-		struct container_lha_file_state	lha;
-		struct container_zip_file_state	zip;
+		struct archivefs_lha_file_state	lha;
+		struct archivefs_zip_file_state	zip;
 	} state;
 };
 
-struct container_state
+struct archivefs_state
 {
 	/* reading the file */
 	void					*file;
 	uint32_t				fileLength;
 
 	/* contents of the container */
-	struct container_cached_file_entry	*firstEntry;
-	struct container_cached_file_entry	*lastEntry;
+	struct archivefs_cached_file_entry	*firstEntry;
+	struct archivefs_cached_file_entry	*lastEntry;
 	
 	/* pointers to the implementation */
-	int (*fileOpen)(struct container_file_state *file_state,struct container_cached_file_entry *entry);
-	int32_t (*fileRead)(void *dest,struct container_file_state *file_state,uint32_t length,uint32_t offset);
+	int (*fileOpen)(struct archivefs_file_state *file_state,struct archivefs_cached_file_entry *entry);
+	int32_t (*fileRead)(void *dest,struct archivefs_file_state *file_state,uint32_t length,uint32_t offset);
 };
 
-struct container_combined_state
+struct archivefs_combined_state
 {
-	struct container_state			container;
-	struct container_file_state		fileState;
+	struct archivefs_state			container;
+	struct archivefs_file_state		fileState;
 
-	struct container_cached_file_entry	*currentFile;
+	struct archivefs_cached_file_entry	*currentFile;
 };
 
 struct FIB

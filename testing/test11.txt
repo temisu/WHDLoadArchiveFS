@@ -7,5 +7,5 @@ read testing/test_files/test_lh0.lha TemplosSagradosHD/nofile
 OUTPUT:
 ----------------------------------------------------------------------------
 Read:
-container_getFileSize() failed with code -4 (File not found)
+archivefs_getFileSize() failed with code -4 (File not found)
 --END
