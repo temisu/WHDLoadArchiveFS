@@ -1,4 +1,4 @@
-# WHDLoadArchiveFS - Lha and Zip opening virtual filesystem for WHDload
+# WHDLoadArchiveFS - Lha and Zip opening virtual filesystem for WHDLoad
 
 This is extension for WHDLoad utilizing whdvfs-interface. It creates virtual filesystem from Zip and Lha archives thus allows WHDLoad to run images directly from archives without needing to unpack them
 
