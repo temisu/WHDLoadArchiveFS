@@ -46,7 +46,7 @@
    Rather complex due to intertwined logic of different levels which still share quite a lot of common, but with quirks...
    In theory should read non-Amiga archives with good success, but this is not a priority
 */
-static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,struct archivefs_state *container,uint32_t offset)
+static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,struct archivefs_state *archive,uint32_t offset)
 {
 	int ret;
 	uint8_t hdr[HDR_L2_SIZE];
@@ -57,14 +57,14 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	uint8_t *stringSpace;
 
 	*dest=0;
-	if ((ret=archivefs_common_simpleRead(hdr,HDR_L0_SIZE,offset,container))<0) return ret;
+	if ((ret=archivefs_common_simpleRead(hdr,HDR_L0_SIZE,offset,archive))<0) return ret;
 
 	/* Basic stuff */
 	level=hdr[HDR_L0_OFFSET_LEVEL];
 	if (level>2)
 		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
 	if (level==2)
-		if ((ret=archivefs_common_simpleRead(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,archive))<0) return ret;
 
 	if (hdr[HDR_L0_OFFSET_METHOD]!='-'||hdr[HDR_L0_OFFSET_METHOD+1]!='l'||hdr[HDR_L0_OFFSET_METHOD+2]!='h'||hdr[HDR_L0_OFFSET_METHOD+4]!='-')
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -111,11 +111,11 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		} else {
 			if (hdrSize<HDR_L0_SIZE+HDR_L1_MID_SIZE+nameLength)
 				return ARCHIVEFS_ERROR_INVALID_FORMAT;
-			if ((ret=archivefs_common_simpleRead(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,container))<0) return ret;
+			if ((ret=archivefs_common_simpleRead(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,archive))<0) return ret;
 			isAmiga=hdr[0]=='A';
-			if (offset+hdrSize>container->fileLength)
+			if (offset+hdrSize>archive->fileLength)
 				return ARCHIVEFS_ERROR_INVALID_FORMAT;
-			maxExtraOffset=container->fileLength;
+			maxExtraOffset=archive->fileLength;
 			offset+=hdrSize;
 		}
 
@@ -131,7 +131,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 				i+=2;
 				break;
 			}
-			if ((ret=archivefs_common_simpleRead(hdr,3,offset,container))<0) return ret;
+			if ((ret=archivefs_common_simpleRead(hdr,3,offset,archive))<0) return ret;
 			offset+=2;
 			i+=2;
 			extraLength=GET_LE16(hdr);
@@ -156,7 +156,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 				case HDR_EXTRA_ATTRIBUTES_ID:
 				if (extraLength<1)
 					return ARCHIVEFS_ERROR_INVALID_FORMAT;
-				if ((ret=archivefs_common_simpleRead(hdr,1,offset,container))<0) return ret;
+				if ((ret=archivefs_common_simpleRead(hdr,1,offset,archive))<0) return ret;
 				attributes=hdr[0];
 				break;
 
@@ -182,7 +182,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 
 		if (hdrSize<HDR_L0_SIZE+nameLength)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
-		if (offset+hdrSize+HDR_L0_MID_SIZE>container->fileLength)
+		if (offset+hdrSize+HDR_L0_MID_SIZE>archive->fileLength)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		offset+=hdrSize+HDR_L0_MID_SIZE;
 		/* extra stuff (CRC) are not part of header */
@@ -226,7 +226,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	/* now process strings */
 	if (pathLength)
 	{
-		if ((ret=archivefs_common_simpleRead(stringSpace,pathLength,pathOffset,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(stringSpace,pathLength,pathOffset,archive))<0) return ret;
 		for (i=0;i<pathLength;i++)
 			if ((uint8_t)(stringSpace[i])==0xffU) stringSpace[i]='/';
 
@@ -238,14 +238,14 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	}
 
 	if (nameLength)
-		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,archive))<0) return ret;
 	if (noteLength)
 	{
 		/* lets make level2 look like level0-1 filenote. it is easier this way, although it requires string search later
 		   level1 is still the most common case and level2 is just corner case
 		 */
 		stringSpace[pathLength+nameLength]=0;
-		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength+nameLength+1,noteLength,noteOffset,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength+nameLength+1,noteLength,noteOffset,archive))<0) return ret;
 		nameLength+=noteLength+1;
 	}
 	if (!level)
@@ -363,26 +363,26 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 	if (length+offset>entry->length)
 		return ARCHIVEFS_ERROR_INVALID_READ;
-	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->container);
+	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
 }
 
-int archivefs_lha_initialize(struct archivefs_state *container)
+int archivefs_lha_initialize(struct archivefs_state *archive)
 {
 	struct archivefs_cached_file_entry *entry;
 	int offset=0;
 
 	/* there might (should) be a stop character at the end of the file */
-	while (offset+1<container->fileLength)
+	while (offset+1<archive->fileLength)
 	{
-		offset=archivefs_lha_parse_entry(&entry,container,offset);
+		offset=archivefs_lha_parse_entry(&entry,archive,offset);
 		if (offset<0)
 		{
 			if (entry) archivefs_free(entry);
 			return offset;
 		}
-		archivefs_common_insertFileEntry(container,entry);
+		archivefs_common_insertFileEntry(archive,entry);
 	}
-	container->fileOpen=archivefs_lha_fileOpen;
-	container->fileRead=archivefs_lha_fileRead;
+	archive->fileOpen=archivefs_lha_fileOpen;
+	archive->fileRead=archivefs_lha_fileRead;
 	return 0;
 }

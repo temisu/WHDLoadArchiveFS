@@ -39,7 +39,7 @@ struct archivefs_state;
 
 struct archivefs_file_state
 {
-	struct archivefs_state			*container;
+	struct archivefs_state			*archive;
 
 	union
 	{
@@ -54,7 +54,7 @@ struct archivefs_state
 	void					*file;
 	uint32_t				fileLength;
 
-	/* contents of the container */
+	/* contents of the archive */
 	struct archivefs_cached_file_entry	*firstEntry;
 	struct archivefs_cached_file_entry	*lastEntry;
 	
@@ -65,7 +65,7 @@ struct archivefs_state
 
 struct archivefs_combined_state
 {
-	struct archivefs_state			container;
+	struct archivefs_state			archive;
 	struct archivefs_file_state		fileState;
 
 	struct archivefs_cached_file_entry	*currentFile;

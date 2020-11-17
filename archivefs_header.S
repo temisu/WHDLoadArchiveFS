@@ -12,7 +12,7 @@
 
 	dc.l	_archivefs_initialize
 	dc.l	_archivefs_uninitialize
-	dc.l	0	; dircache
+	dc.l	_archivefs_dirCache
 	dc.l	_archivefs_fileCache
 	dc.l	_archivefs_getFileSize
 	dc.l	_archivefs_fileRead

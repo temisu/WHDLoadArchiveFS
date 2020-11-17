@@ -58,20 +58,10 @@ int32_t archivefs_integration_fileRead(void *dest,uint32_t length,uint32_t offse
 
 void *archivefs_malloc(uint32_t size)
 {
-	/* AllocVec is V36 */
-	void *ptr;
-
-	size+=4;
-	ptr=AllocMem(size,MEMF_CLEAR);
-	*(uint32_t*)ptr=size;
-	return (char*)ptr+4;
+	return AllocVec(size,MEMF_CLEAR);
 }
 
 void archivefs_free(void *ptr)
 {
-	uint32_t size;
-
-	ptr=(char*)ptr-4;
-	size=*(uint32_t*)ptr;
-	FreeMem(ptr,size);
+	FreeVec(ptr);
 }

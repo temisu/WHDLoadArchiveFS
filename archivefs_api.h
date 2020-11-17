@@ -46,7 +46,7 @@ typedef unsigned char uint8_t;
 /* callback functions for the API */
 
 /*
-   archivefs_allocFile will be called by archivefs_fileCache for each file in the container.
+   archivefs_allocFile will be called by archivefs_fileCache for each file in the archive.
    Parameters:
 	* name - name of the file, including path
 	* length - length of the file
@@ -58,7 +58,7 @@ typedef unsigned char uint8_t;
 typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 
 /*
-   archivefs_registerEntry will be calles by archivefs_examine for each entry in the container
+   archivefs_registerEntry will be calles by archivefs_dirCache for each entry in the archive
    Parameters:
 	* path - path of the file
 	* fib - pointer to the 232-byte fib structure for the entry
@@ -72,10 +72,10 @@ typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
 /* API */
 
 /*
-   Initialize container. Will allocate memory for the directory structure, file list and internal state.
+   Initialize archive. Will allocate memory for the directory structure, file list and internal state.
    Parameters:
-	* container - return pointer to void* container. Will be initialized if successfull
-	* filename - filename for the container
+	* archive - return pointer to void* archive. Will be initialized if successfull
+	* filename - filename for the archive
    Returns:
 	* error code or 0 if success. In case error occured all allocated memory is freed
    Notable error codes:
@@ -85,23 +85,23 @@ typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
 	* ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
 	* ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */
-extern int archivefs_initialize(void **container,const char *filename);
+extern int archivefs_initialize(void **archive,const char *filename);
 
 /*
-   Uninitialize container. frees all memory
+   Uninitialize archive. frees all memory
    Parameters:
-	* container - pointer to container
+	* archive - pointer to archive
    Returns:
 	* error code or 0 if success.
    Notable error codes:
 	* none
 */
-extern int archivefs_uninitialize(void *container);
+extern int archivefs_uninitialize(void *archive);
 
 /*
    Get file size. Does not allocate memory
    Parameters:
-	* container - pointer to container
+	* archive - pointer to archive
 	* name - file name w. path
    Returns:
 	* error code or file size if success
@@ -109,14 +109,15 @@ extern int archivefs_uninitialize(void *container);
 	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
 	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
-extern int32_t archivefs_getFileSize(void *container,const char *name);
+extern int32_t archivefs_getFileSize(void *archive,const char *name);
 
 /*
    Read (chosen) files into fileCache.
    Does not allocate memory
-   archivefs_fileCache will call archivefs_allocFile for each file in the container and if the function returns with a valid pointer
-   file contents are read to it. archivefs_fileCache is cant be called in parallel to archivefs_fileRead in scope of same container
+   archivefs_fileCache will call archivefs_allocFile for each file in the archive and if the function returns with a valid pointer
+   file contents are read to it. archivefs_fileCache is cant be called in parallel to archivefs_fileRead in scope of same archive
    Parameters:
+	* archive - pointer to archive
 	* fileFunc - function to call for each file
    Returns:
 	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
@@ -124,25 +125,26 @@ extern int32_t archivefs_getFileSize(void *container,const char *name);
 	* Pass through errors from archivefs_integration
 	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 */
-extern int archivefs_fileCache(void *container,archivefs_allocFile fileFunc);
+extern int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
 
 /*
-   Query FIB of all the entries in the container.
+   Query FIB of all the entries in the archive.
    Does not allocate memory
    Parameters:
+	* archive - pointer to archive
 	* registerFunc - function to call for each entry
    Returns:
 	* error code or 0 if success.
    Notable error codes:
 	* none
 */
-extern int archivefs_examine(void *container,archivefs_registerEntry registerFunc);
+extern int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
 
 /*
    Read a file
    Does not allocate memory
    Parameters:
-	* container - pointer to container
+	* archive - pointer to archive
 	* dest - pointer to destination buffer to be filled
 	* name - file name w. path
 	* length - length of data to be read
@@ -156,7 +158,7 @@ extern int archivefs_examine(void *container,archivefs_registerEntry registerFun
 	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 	* ARCHIVEFS_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
-extern int32_t archivefs_fileRead(void *container,void *dest,const char *name,uint32_t length,uint32_t offset);
+extern int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint32_t length,uint32_t offset);
 
 /*
    Returns description for error code

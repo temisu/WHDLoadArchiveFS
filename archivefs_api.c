@@ -7,15 +7,15 @@
 static int32_t archivefs_fileReadRaw(struct archivefs_combined_state *combined,void *dest,struct archivefs_cached_file_entry *entry,uint32_t length,uint32_t offset)
 {
 	int ret;
-	struct archivefs_state *container=&combined->container;
+	struct archivefs_state *archive=&combined->archive;
 
 	if (combined->currentFile!=entry)
 	{
-		ret=container->fileOpen(&combined->fileState,entry);
+		ret=archive->fileOpen(&combined->fileState,entry);
 		if (ret<0) return ret;
 		combined->currentFile=entry;
 	}
-	return container->fileRead(dest,&combined->fileState,length,offset);
+	return archive->fileRead(dest,&combined->fileState,length,offset);
 }
 
 /*
@@ -46,12 +46,12 @@ static void archivefs_createFIB(struct FIB *dest,const struct archivefs_cached_f
 	dest->gid=0;
 }
 
-static struct archivefs_cached_file_entry *archivefs_findEntry(struct archivefs_state *container,const char *name)
+static struct archivefs_cached_file_entry *archivefs_findEntry(struct archivefs_state *archive,const char *name)
 {
 	struct archivefs_cached_file_entry *entry;
 	const char *name1,*name2;
 
-	entry=container->firstEntry;
+	entry=archive->firstEntry;
 	while (entry)
 	{
 		name1=entry->pathAndName;
@@ -70,7 +70,7 @@ static struct archivefs_cached_file_entry *archivefs_findEntry(struct archivefs_
 
 /* --- */
 
-int archivefs_initialize(void **_container,const char *filename)
+int archivefs_initialize(void **_archive,const char *filename)
 {
 	int ret;
 	uint8_t hdr[3];
@@ -79,61 +79,61 @@ int archivefs_initialize(void **_container,const char *filename)
 	combinedState=archivefs_malloc(sizeof(struct archivefs_combined_state));
 	if (!combinedState)
 		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
-	combinedState->fileState.container=&combinedState->container;
+	combinedState->fileState.archive=&combinedState->archive;
 
-	ret=archivefs_integration_fileOpen(filename,&combinedState->container.fileLength,&combinedState->container.file);
+	ret=archivefs_integration_fileOpen(filename,&combinedState->archive.fileLength,&combinedState->archive.file);
 	if (!ret)
 	{
-		combinedState->container.firstEntry=0;
-		combinedState->container.lastEntry=0;
+		combinedState->archive.firstEntry=0;
+		combinedState->archive.lastEntry=0;
 		combinedState->currentFile=0;
 	} else {
-		combinedState->container.file=0;
+		combinedState->archive.file=0;
 	}
 
 	if (!ret)
 	{
 		/* although not good enough for the generic case, this works for amiga lha/zip archives */
-		ret=archivefs_integration_fileRead(hdr,3,2,combinedState->container.file);
+		ret=archivefs_integration_fileRead(hdr,3,2,combinedState->archive.file);
 		if (ret>=0 && ret!=3) ret=ARCHIVEFS_ERROR_INVALID_FORMAT;
 		else
 		{
-			if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->container);
-				else ret=archivefs_zip_initialize(&combinedState->container);
+			if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->archive);
+				else ret=archivefs_zip_initialize(&combinedState->archive);
 		}
 	}
 
 	if (ret) archivefs_uninitialize(combinedState);
-	*_container=ret?0:combinedState;
+	*_archive=ret?0:combinedState;
 	return ret;
 }
 
-int archivefs_uninitialize(void *_container)
+int archivefs_uninitialize(void *_archive)
 {
 	struct archivefs_cached_file_entry *tmp,*prev;
-	struct archivefs_state *container=&((struct archivefs_combined_state*)_container)->container;
+	struct archivefs_state *archive=&((struct archivefs_combined_state*)_archive)->archive;
 
-	tmp=container->lastEntry;
+	tmp=archive->lastEntry;
 	while (tmp)
 	{
 		prev=tmp->prev;
 		archivefs_free(tmp);
 		tmp=prev;
 	}
-	container->firstEntry=0;
-	container->lastEntry=0;
-	if (container->file)
-		archivefs_integration_fileClose(container->file);
-	archivefs_free(_container);
+	archive->firstEntry=0;
+	archive->lastEntry=0;
+	if (archive->file)
+		archivefs_integration_fileClose(archive->file);
+	archivefs_free(_archive);
 	return 0;
 }
 
-int32_t archivefs_getFileSize(void *_container,const char *name)
+int32_t archivefs_getFileSize(void *_archive,const char *name)
 {
 	const struct archivefs_cached_file_entry *entry;
-	struct archivefs_state *container=&((struct archivefs_combined_state*)_container)->container;
+	struct archivefs_state *archive=&((struct archivefs_combined_state*)_archive)->archive;
 
-	entry=archivefs_findEntry(container,name);
+	entry=archivefs_findEntry(archive,name);
 	if (!entry)
 		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
 	if (entry->fileType!=ARCHIVEFS_TYPE_FILE)
@@ -141,15 +141,15 @@ int32_t archivefs_getFileSize(void *_container,const char *name)
 	return entry->length;
 }
 
-int archivefs_fileCache(void *_container,archivefs_allocFile fileFunc)
+int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 {
 	void *ptr;
 	int32_t ret;
 	struct archivefs_cached_file_entry *tmp;
-	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_container;
-	struct archivefs_state *container=&combined->container;
+	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_archive;
+	struct archivefs_state *archive=&combined->archive;
 
-	tmp=container->firstEntry;
+	tmp=archive->firstEntry;
 	while (tmp)
 	{
 		if (tmp->fileType==ARCHIVEFS_TYPE_FILE)
@@ -167,16 +167,16 @@ int archivefs_fileCache(void *_container,archivefs_allocFile fileFunc)
 	return 0;
 }
 
-int archivefs_examine(void *_container,archivefs_registerEntry registerFunc)
+int archivefs_dirCache(void *_archive,archivefs_registerEntry registerFunc)
 {
 	struct archivefs_cached_file_entry *tmp;
 	uint32_t i,ret;
 	/* making FIB static would save some stack, but then this func is not re-entrant */
 	struct FIB fib;
-	struct archivefs_state *container=&((struct archivefs_combined_state*)_container)->container;
+	struct archivefs_state *archive=&((struct archivefs_combined_state*)_archive)->archive;
 
 	for (i=0;i<sizeof(fib)/4;i++) ((uint32_t*)&fib)[i]=0;
-	tmp=container->firstEntry;
+	tmp=archive->firstEntry;
 	while (tmp)
 	{
 		archivefs_createFIB(&fib,tmp);
@@ -187,10 +187,10 @@ int archivefs_examine(void *_container,archivefs_registerEntry registerFunc)
 	return 0;
 }
 
-int32_t archivefs_fileRead(void *_container,void *dest,const char *name,uint32_t length,uint32_t offset)
+int32_t archivefs_fileRead(void *_archive,void *dest,const char *name,uint32_t length,uint32_t offset)
 {
-	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_container;
-	struct archivefs_state *container=&combined->container;
+	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_archive;
+	struct archivefs_state *archive=&combined->archive;
 	struct archivefs_cached_file_entry *entry;
 	const char *name1,*name2;
 	int fileLoaded;
@@ -209,7 +209,7 @@ int32_t archivefs_fileRead(void *_container,void *dest,const char *name,uint32_t
 	}
 	if (!fileLoaded)
 	{
-		entry=archivefs_findEntry(container,name);
+		entry=archivefs_findEntry(archive,name);
 		if (!entry)
 			return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
 		if (entry->fileType!=ARCHIVEFS_TYPE_FILE)

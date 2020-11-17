@@ -49,17 +49,17 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 	uint8_t hdr[HDR_LFH_SIZE];
 	uint32_t lfhLength;
 	int ret;
-	struct archivefs_state *container=file_state->container;
+	struct archivefs_state *archive=file_state->archive;
 
 	if (entry->dataType&0x100U)
 	{
 		/* yay! now go for the local file header */
-		if ((ret=archivefs_common_simpleRead(hdr,HDR_LFH_SIZE,entry->dataOffset,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(hdr,HDR_LFH_SIZE,entry->dataOffset,archive))<0) return ret;
 		/* lets keep it minimal */
 		if (GET_LE32(hdr)!=0x4034b50U)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		lfhLength=HDR_LFH_SIZE+GET_LE16(hdr+HDR_LFH_OFFSET_NAMELENGTH)+GET_LE16(hdr+HDR_LFH_OFFSET_EXTRALENGTH);
-		if (entry->dataOffset+lfhLength+entry->dataLength>=container->fileLength)
+		if (entry->dataOffset+lfhLength+entry->dataLength>=archive->fileLength)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		entry->dataOffset+=lfhLength;
 		entry->dataType&=~0x100U;
@@ -78,10 +78,10 @@ static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *fi
 		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 	if (length+offset>entry->length)
 		return ARCHIVEFS_ERROR_INVALID_READ;
-	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->container);
+	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
 }
 
-int archivefs_zip_initialize(struct archivefs_state *container)
+int archivefs_zip_initialize(struct archivefs_state *archive)
 {
 	struct archivefs_cached_file_entry *entry;
 
@@ -92,19 +92,19 @@ int archivefs_zip_initialize(struct archivefs_state *container)
 	uint8_t *stringSpace;
 
 	/* First thing first: Find end of central directory */
-	if (container->fileLength<HDR_EOCD_SIZE)
+	if (archive->fileLength<HDR_EOCD_SIZE)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	if ((ret=archivefs_common_simpleRead(hdr,HDR_EOCD_SIZE,container->fileLength-HDR_EOCD_SIZE,container))<0) return ret;
+	if ((ret=archivefs_common_simpleRead(hdr,HDR_EOCD_SIZE,archive->fileLength-HDR_EOCD_SIZE,archive))<0) return ret;
 	for (i=0;i<65536U;i++)
 	{
 		if (GET_LE32(hdr)==0x6054b50U && GET_LE16(hdr+HDR_EOCD_OFFSET_COMMENTLENGTH)==i)
 			break;
 		/* Read new content byte by byte, this is the slow bit (but practically really rare) */
-		if (i+1>container->fileLength-HDR_EOCD_SIZE)
+		if (i+1>archive->fileLength-HDR_EOCD_SIZE)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		for (j=HDR_EOCD_SIZE-1;j;j--)
 			hdr[j]=hdr[j-1];
-		if ((ret=archivefs_common_simpleRead(hdr,1,container->fileLength-HDR_EOCD_SIZE-i-1,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(hdr,1,archive->fileLength-HDR_EOCD_SIZE-i-1,archive))<0) return ret;
 	}
 	if (i==65536U)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -118,12 +118,12 @@ int archivefs_zip_initialize(struct archivefs_state *container)
 		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
 	cdLength=GET_LE32(hdr+HDR_EOCD_OFFSET_CDLENGTH);
 	cdOffset=GET_LE32(hdr+HDR_EOCD_OFFSET_CDOFFSET);
-	if (cdOffset+cdLength>container->fileLength)
+	if (cdOffset+cdLength>archive->fileLength)
 		 return ARCHIVEFS_ERROR_INVALID_FORMAT;
 
 	for (i=0;i<numEntries;i++)
 	{
-		if ((ret=archivefs_common_simpleRead(hdr,HDR_CFH_SIZE,cdOffset,container))<0) return ret;
+		if ((ret=archivefs_common_simpleRead(hdr,HDR_CFH_SIZE,cdOffset,archive))<0) return ret;
 		if (GET_LE32(hdr)!=0x2014b50U)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		/* patching, encryption */
@@ -189,7 +189,7 @@ int archivefs_zip_initialize(struct archivefs_state *container)
 		*entry->filenote=0;
 		if (commentLength)
 		{
-			if ((ret=archivefs_common_simpleRead(entry->filenote,commentLength,cdOffset+HDR_CFH_SIZE+nameLength+extraLength,container))<0)
+			if ((ret=archivefs_common_simpleRead(entry->filenote,commentLength,cdOffset+HDR_CFH_SIZE+nameLength+extraLength,archive))<0)
 			{
 				archivefs_free(entry);
 				return ret;
@@ -200,7 +200,7 @@ int archivefs_zip_initialize(struct archivefs_state *container)
 		*stringSpace=0;
 		if (nameLength)
 		{
-			if ((ret=archivefs_common_simpleRead(stringSpace,nameLength,cdOffset+HDR_CFH_SIZE,container))<0)
+			if ((ret=archivefs_common_simpleRead(stringSpace,nameLength,cdOffset+HDR_CFH_SIZE,archive))<0)
 			{
 				archivefs_free(entry);
 				return ret;
@@ -251,13 +251,13 @@ int archivefs_zip_initialize(struct archivefs_state *container)
 		printf("filename '%s'\n",entry->filename);
 		printf("filenote '%s'\n\n",entry->filenote);
 #endif
-		archivefs_common_insertFileEntry(container,entry);
+		archivefs_common_insertFileEntry(archive,entry);
 
 		cdOffset+=cfhLength;
 		cdLength-=cfhLength;
 	}
 
-	container->fileOpen=archivefs_zip_fileOpen;
-	container->fileRead=archivefs_zip_fileRead;
+	archive->fileOpen=archivefs_zip_fileOpen;
+	archive->fileRead=archivefs_zip_fileRead;
 	return 0;
 }

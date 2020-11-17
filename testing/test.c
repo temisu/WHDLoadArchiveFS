@@ -85,6 +85,7 @@ static void *test_allocFunc(const char *name,uint32_t length)
 
 	printf("File '%s', Length %u\n",name,length);
 	ret=archivefs_malloc(length);
+	if (!ret && !length) ret=(void*)0x80000000U;
 	allocatedFilenames[allocatedFileCount]=name;
 	allocatedFiles[allocatedFileCount++]=ret;
 	return ret;
@@ -147,16 +148,16 @@ int main(int argc,char **argv)
 				}
 				archivefs_free(verify);
 			}
-			archivefs_free(allocatedFiles[i]);
+			if ((uint32_t)(allocatedFiles[i])!=0x80000000U) archivefs_free(allocatedFiles[i]);
 		}
 		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"examine")) {
 		printf("----------------------------------------------------------------------------\n");
 		printf("Examine:\n");
-		ret=archivefs_examine(container,test_registerFunc);
+		ret=archivefs_dirCache(container,test_registerFunc);
 		if (ret)
 		{
-			printf("archivefs_examine failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
+			printf("archivefs_dirCache failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 			return 0;
 		}
 		printf("----------------------------------------------------------------------------\n");

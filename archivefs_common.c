@@ -3,9 +3,9 @@
 #include "archivefs_private.h"
 #include "archivefs_integration.h"
 
-int32_t archivefs_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *container)
+int32_t archivefs_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
 {
-	int32_t ret=archivefs_integration_fileRead(dest,length,offset,container->file);
+	int32_t ret=archivefs_integration_fileRead(dest,length,offset,archive->file);
 	if (ret<0) return ret;
 	if (ret!=length) return ARCHIVEFS_ERROR_INVALID_FORMAT;
 	return ret;
@@ -71,15 +71,15 @@ uint32_t archivefs_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSin
 	return daysSinceEpoch;
 }
 
-void archivefs_common_insertFileEntry(struct archivefs_state *container,struct archivefs_cached_file_entry *entry)
+void archivefs_common_insertFileEntry(struct archivefs_state *archive,struct archivefs_cached_file_entry *entry)
 {
-	if (!container->lastEntry)
+	if (!archive->lastEntry)
 	{
-		container->firstEntry=entry;
-		container->lastEntry=entry;
+		archive->firstEntry=entry;
+		archive->lastEntry=entry;
 	} else {
-		container->lastEntry->next=entry;
-		entry->prev=container->lastEntry;
-		container->lastEntry=entry;
+		archive->lastEntry->next=entry;
+		entry->prev=archive->lastEntry;
+		archive->lastEntry=entry;
 	}
 }
