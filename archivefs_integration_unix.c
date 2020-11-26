@@ -7,6 +7,26 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
+void *archivefs_malloc(uint32_t size)
+{
+	return malloc(size);
+}
+
+void archivefs_free(void *ptr)
+{
+	free(ptr);
+}
+
+void archivefs_integration_initialize()
+{
+	// nothing needed
+}
+
+void archivefs_integration_uninitialize()
+{
+	// nothing needed
+}
+
 int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **file)
 {
 	int fd,l;
@@ -17,8 +37,11 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **
 	l=lseek(fd,0,SEEK_END);
 	if (l<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	*file=(void*)(size_t)fd;
 	*length=l;
+	l=lseek(fd,0,SEEK_SET);
+	if (l<0)
+		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+	*file=(void*)(size_t)fd;
 	return 0;
 }
 
@@ -28,24 +51,21 @@ int archivefs_integration_fileClose(void *file)
 	return 0;
 }
 
-int32_t archivefs_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file)
+int archivefs_integration_fileSeek(uint32_t offset,void *file)
 {
 	int fd=(int)file;
 	int ret=lseek(fd,offset,SEEK_SET);
 	if (ret<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
- 	ret=read(fd,dest,length);
+	return 0;
+}
+
+int32_t archivefs_integration_fileRead(void *dest,uint32_t length,void *file)
+{
+	int fd=(int)file;
+ 	int ret=read(fd,dest,length);
 	if (ret<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
  	return ret;
 }
 
-void *archivefs_malloc(uint32_t size)
-{
-	return malloc(size);
-}
-
-void archivefs_free(void *ptr)
-{
-	free(ptr);
-}

@@ -76,6 +76,8 @@ int archivefs_initialize(void **_archive,const char *filename)
 	uint8_t hdr[3];
 	struct archivefs_combined_state *combinedState;
 
+	archivefs_integration_initialize();
+
 	combinedState=archivefs_malloc(sizeof(struct archivefs_combined_state));
 	if (!combinedState)
 		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
@@ -87,6 +89,7 @@ int archivefs_initialize(void **_archive,const char *filename)
 	{
 		combinedState->archive.firstEntry=0;
 		combinedState->archive.lastEntry=0;
+		combinedState->archive.filePos=0;
 		combinedState->currentFile=0;
 	} else {
 		combinedState->archive.file=0;
@@ -95,8 +98,8 @@ int archivefs_initialize(void **_archive,const char *filename)
 	if (!ret)
 	{
 		/* although not good enough for the generic case, this works for amiga lha/zip archives */
-		ret=archivefs_integration_fileRead(hdr,3,2,combinedState->archive.file);
-		if (ret>=0 && ret!=3) ret=ARCHIVEFS_ERROR_INVALID_FORMAT;
+		ret=archivefs_common_simpleRead(hdr,3,2,&combinedState->archive);
+		if (ret<0 && ret!=3) ret=ARCHIVEFS_ERROR_INVALID_FORMAT;
 		else
 		{
 			if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->archive);
@@ -129,6 +132,9 @@ int archivefs_uninitialize(void *_archive)
 	if (archive->file)
 		archivefs_integration_fileClose(archive->file);
 	archivefs_free(_archive);
+
+	archivefs_integration_uninitialize();
+
 	return 0;
 }
 

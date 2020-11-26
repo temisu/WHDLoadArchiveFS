@@ -52,6 +52,7 @@ struct archivefs_state
 {
 	/* reading the file */
 	void					*file;
+	uint32_t				filePos;
 	uint32_t				fileLength;
 
 	/* contents of the archive */

@@ -9,7 +9,35 @@
 #ifdef ARCHIVEFS_STANDALONE
 struct ExecBase *SysBase=(void*)4U;
 struct DosLibrary *DOSBase=0;
+static int archivefs_integration_initCounter=0;
 #endif
+
+void *archivefs_malloc(uint32_t size)
+{
+	return AllocVec(size,MEMF_CLEAR);
+}
+
+void archivefs_free(void *ptr)
+{
+	FreeVec(ptr);
+}
+
+
+void archivefs_integration_initialize()
+{
+#ifdef ARCHIVEFS_STANDALONE
+	if (!archivefs_integration_initCounter++)
+		DOSBase=(void*)OpenLibrary("dos.library",0);
+#endif
+}
+
+void archivefs_integration_uninitialize()
+{
+#ifdef ARCHIVEFS_STANDALONE
+	if (!--archivefs_integration_initCounter)
+		CloseLibrary((void*)DOSBase);
+#endif
+}
 
 int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **file)
 {
@@ -17,11 +45,6 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **
 	struct FileInfoBlock fib;
 	BOOL success;
 
-#ifdef ARCHIVEFS_STANDALONE
-	if (!DOSBase)
-		DOSBase=(void*)OpenLibrary("dos.library",0);
-#endif
-	
 	lock=Lock(filename,ACCESS_READ);
 	if (!lock)
 		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
@@ -46,22 +69,19 @@ int archivefs_integration_fileClose(void *file)
 	return 0;
 }
 
-int32_t archivefs_integration_fileRead(void *dest,uint32_t length,uint32_t offset,void *file)
+int archivefs_integration_fileSeek(uint32_t offset,void *file)
+{
+	Seek((BPTR)file,offset,OFFSET_BEGINNING);
+	return 0;
+}
+
+int32_t archivefs_integration_fileRead(void *dest,uint32_t length,void *file)
 {
 	int32_t ret;
-	Seek((BPTR)file,offset,OFFSET_BEGINNING);
+
 	ret=Read((BPTR)file,dest,length);
 	if (ret<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
 	return ret;
 }
 
-void *archivefs_malloc(uint32_t size)
-{
-	return AllocVec(size,MEMF_CLEAR);
-}
-
-void archivefs_free(void *ptr)
-{
-	FreeVec(ptr);
-}

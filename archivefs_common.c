@@ -5,8 +5,15 @@
 
 int32_t archivefs_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
 {
-	int32_t ret=archivefs_integration_fileRead(dest,length,offset,archive->file);
+	int32_t ret;
+	if (offset!=archive->filePos)
+	{
+		if ((ret=archivefs_integration_fileSeek(offset,archive->file))<0) return ret;
+		archive->filePos=offset;
+	}
+	ret=archivefs_integration_fileRead(dest,length,archive->file);
 	if (ret<0) return ret;
+	archive->filePos+=ret;
 	if (ret!=length) return ARCHIVEFS_ERROR_INVALID_FORMAT;
 	return ret;
 }
