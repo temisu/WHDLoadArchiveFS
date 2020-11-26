@@ -59,8 +59,14 @@ struct archivefs_state
 	struct archivefs_cached_file_entry	*lastEntry;
 	
 	/* pointers to the implementation */
-	int (*fileOpen)(struct archivefs_file_state *file_state,struct archivefs_cached_file_entry *entry);
-	int32_t (*fileRead)(void *dest,struct archivefs_file_state *file_state,uint32_t length,uint32_t offset);
+	int (*fileOpen)(struct archivefs_file_state*,struct archivefs_cached_file_entry*);
+	int32_t (*fileRead)(void *dest,struct archivefs_file_state *,uint32_t,uint32_t);
+	int (*uninitialize)(struct archivefs_state*);
+
+	union
+	{
+		struct archivefs_lha_state	lha;
+	} state;
 };
 
 struct archivefs_combined_state

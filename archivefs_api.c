@@ -79,6 +79,7 @@ int archivefs_initialize(void **_archive,const char *filename)
 	combinedState=archivefs_malloc(sizeof(struct archivefs_combined_state));
 	if (!combinedState)
 		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+	combinedState->archive.uninitialize=0;
 	combinedState->fileState.archive=&combinedState->archive;
 
 	ret=archivefs_integration_fileOpen(filename,&combinedState->archive.fileLength,&combinedState->archive.file);
@@ -112,6 +113,9 @@ int archivefs_uninitialize(void *_archive)
 {
 	struct archivefs_cached_file_entry *tmp,*prev;
 	struct archivefs_state *archive=&((struct archivefs_combined_state*)_archive)->archive;
+
+	if (archive->uninitialize)
+		archive->uninitialize(archive);
 
 	tmp=archive->lastEntry;
 	while (tmp)

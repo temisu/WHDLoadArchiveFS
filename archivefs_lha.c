@@ -3,6 +3,7 @@
 #include "archivefs_private.h"
 #include "archivefs_common.h"
 #include "archivefs_integration.h"
+#include "archivefs_lha_decompressor.h"
 
 #define HDR_L0_SIZE (22)
 #define HDR_L0_OFFSET_SIZE (0)
@@ -71,13 +72,28 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 
 	/* Amiga does not use -lhd- method for empty directories at any level, but we can still support it */
 	isDir=0;
-	if (hdr[HDR_L0_OFFSET_METHOD+3]=='d') isDir=1;
-/* until we support compression... */
-#if 0
-		else if (hdr[HDR_L0_OFFSET_METHOD+3]=='5') dataType=1;
-#endif
-			else if (hdr[HDR_L0_OFFSET_METHOD+3]=='0') dataType=0;
-				else return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+	switch (hdr[HDR_L0_OFFSET_METHOD+3])
+	{
+		case 'd':
+		dataType=0;
+		isDir=1;
+		break;
+
+		case '0':
+		dataType=0;
+		break;
+
+		case '4':
+		dataType=4;
+		break;
+
+		case '5':
+		dataType=5;
+		break;
+
+		default:
+		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+	}
 
 	/* common for all header levels */
 	packedLength=GET_LE32(hdr+HDR_L0_OFFSET_PACKEDSIZE)+2;
@@ -350,6 +366,13 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 static int archivefs_lha_fileOpen(struct archivefs_file_state *file_state,struct archivefs_cached_file_entry *entry)
 {
 	file_state->state.lha.entry=entry;
+
+	if (entry->dataType)
+	{
+		/* again a bit hackish. Have the decompression state as part of the main state... */
+		file_state->state.lha.decompressState=file_state->archive->state.lha.decompressState;
+		archivefs_lhaDecompressInitialize(file_state->state.lha.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length,entry->dataType);
+	}
 	return 0;
 }
 
@@ -359,17 +382,28 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 	const struct archivefs_cached_file_entry *entry;
 
 	entry=file_state->state.lha.entry;
-	if (entry->dataType)
-		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 	if (length+offset>entry->length)
 		return ARCHIVEFS_ERROR_INVALID_READ;
-	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
+	if (entry->dataType)
+	{
+		return archivefs_lhaDecompress(file_state->state.lha.decompressState,dest,length,offset);
+	} else {
+		return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
+	}
+}
+
+static int archivefs_lha_uninitialize(struct archivefs_state *archive)
+{
+	if (archive->state.lha.decompressState)
+		archivefs_free(archive->state.lha.decompressState);
+	return 0;
 }
 
 int archivefs_lha_initialize(struct archivefs_state *archive)
 {
 	struct archivefs_cached_file_entry *entry;
-	int offset=0;
+	int usesCompression=0;
+	int32_t offset=0;
 
 	/* there might (should) be a stop character at the end of the file */
 	while (offset+1<archive->fileLength)
@@ -380,9 +414,18 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 			if (entry) archivefs_free(entry);
 			return offset;
 		}
+		if (entry->dataType) usesCompression=1;
 		archivefs_common_insertFileEntry(archive,entry);
 	}
 	archive->fileOpen=archivefs_lha_fileOpen;
 	archive->fileRead=archivefs_lha_fileRead;
+	archive->uninitialize=archivefs_lha_uninitialize;
+
+	if (usesCompression)
+	{
+		archive->state.lha.decompressState=archivefs_malloc(sizeof(struct archivefs_lhaDecompressState));
+		if (!archive->state.lha.decompressState)
+			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+	} else archive->state.lha.decompressState=0;
 	return 0;
 }

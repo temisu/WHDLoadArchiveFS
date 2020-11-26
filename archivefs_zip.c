@@ -81,6 +81,11 @@ static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *fi
 	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
 }
 
+static int archivefs_zip_uninitialize(struct archivefs_state *archive)
+{
+	return 0;
+}
+
 int archivefs_zip_initialize(struct archivefs_state *archive)
 {
 	struct archivefs_cached_file_entry *entry;
@@ -259,5 +264,6 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 
 	archive->fileOpen=archivefs_zip_fileOpen;
 	archive->fileRead=archivefs_zip_fileRead;
+	archive->uninitialize=archivefs_zip_uninitialize;
 	return 0;
 }

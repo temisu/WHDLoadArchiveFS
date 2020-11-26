@@ -24,7 +24,8 @@ endif
 
 PROG	= test
 
-OBJS	= archivefs_api.o archivefs_common.o archivefs_lha.o archivefs_zip.o
+OBJS	= archivefs_api.o archivefs_common.o archivefs_lha.o archivefs_zip.o \
+	archivefs_huffman_decoder.o archivefs_lha_decompressor.o
 
 OBJS_TEST = test.o CRC32.o $(INTEGRATION_OBJ) $(OBJS)
 OBJS_LIB = archivefs_header.o archivefs_integration_amiga_standalone.o $(OBJS)
