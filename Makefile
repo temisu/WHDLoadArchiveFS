@@ -1,12 +1,12 @@
 # Copyright (C) Teemu Suutari
 
-VPATH	:= testing
+VPATH	:= library testing
 
 TARGET := Amiga
 
 ifneq ($(TARGET), Amiga)
 CC	= clang
-CFLAGS	= -g -Wall -Werror -I.
+CFLAGS	= -g -Wall -Werror -Ilibrary -I.
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_unix.o
 LIB	=
@@ -15,7 +15,7 @@ export PATH := $(PATH):$(HOME)/vbcc_cross
 AS	= $(HOME)/vbcc_cross/vasmm68k_mot
 CC	= $(HOME)/vbcc_cross/vc
 LD	= $(HOME)/vbcc_cross/vlink
-CFLAGS	= -I.
+CFLAGS	= -Ilibrary -I. -O2
 AFLAGS	= -Fhunk -Itarget/include_i 
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_amiga.o
@@ -24,21 +24,28 @@ endif
 
 PROG	= test
 
-OBJS	= archivefs_api.o archivefs_common.o archivefs_lha.o archivefs_zip.o \
-	archivefs_huffman_decoder.o archivefs_lha_decompressor.o
+OBJS	= $(addprefix obj/,archivefs_api.o archivefs_common.o archivefs_lha.o archivefs_zip.o \
+	archivefs_huffman_decoder.o archivefs_lha_decompressor.o)
 
-OBJS_TEST = test.o CRC32.o $(INTEGRATION_OBJ) $(OBJS)
-OBJS_LIB = archivefs_header.o archivefs_integration_amiga_standalone.o $(OBJS)
+OBJS_TEST = $(addprefix obj/,test.o CRC32.o $(INTEGRATION_OBJ)) $(OBJS)
+OBJS_LIB = $(addprefix obj/,archivefs_header.o archivefs_integration_amiga_standalone.o) $(OBJS)
 
 all: $(PROG) $(LIB)
 
-%.o: %.S
+obj:
+	mkdir $@
+
+obj/%.o: %.S | obj
 	$(AS) $(AFLAGS) -o $@ $<
 
-archivefs_integration_amiga_standalone.o: archivefs_integration_amiga.c
+obj/archivefs_integration_amiga_standalone.o: archivefs_integration_amiga.c | obj
 	 $(CC) $(CFLAGS) -o $@ -c $< -DARCHIVEFS_STANDALONE=1
 
-%.o: %.c
+ifeq ($(TARGET), Amiga)
+obj/archivefs_huffman_decoder.o: CFLAGS+=-speed
+obj/archivefs_lha_decompressor.o: CFLAGS+=-speed
+endif
+obj/%.o: %.c | obj
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(PROG): $(OBJS_TEST)
