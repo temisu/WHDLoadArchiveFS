@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #ifdef ARCHIVEFS_STANDALONE
-struct ExecBase *SysBase=(void*)4U;
+struct ExecBase *SysBase=0;
 struct DosLibrary *DOSBase=0;
 static int archivefs_integration_initCounter=0;
 #endif
@@ -27,7 +27,8 @@ void archivefs_integration_initialize()
 {
 #ifdef ARCHIVEFS_STANDALONE
 	if (!archivefs_integration_initCounter++)
-		DOSBase=(void*)OpenLibrary("dos.library",0);
+		SysBase=(*((struct ExecBase **) 4U));
+		DOSBase=(void*)OpenLibrary("dos.library",37);
 #endif
 }
 
