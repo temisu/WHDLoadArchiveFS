@@ -11,15 +11,14 @@ LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_unix.o
 LIB	=
 else
-export PATH := $(PATH):$(HOME)/vbcc_cross
-AS	= $(HOME)/vbcc_cross/vasmm68k_mot
-CC	= $(HOME)/vbcc_cross/vc
-LD	= $(HOME)/vbcc_cross/vlink
-CFLAGS	= -Ilibrary -I. -O2
-AFLAGS	= -Fhunk -Itarget/include_i 
+AS	= vasmm68k_mot
+CC	= vc
+LD	= vc
+CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -O2
+AFLAGS	= -Fhunk -I$(INCLUDEOS3)
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_amiga.o
-LIB	= ArchiveFS.whdvfs
+LIB	= WHDLoad.VFS
 endif
 
 PROG	= test
@@ -52,7 +51,7 @@ $(PROG): $(OBJS_TEST)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 $(LIB): $(OBJS_LIB)
-	$(LD) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -Ltarget/lib -lvc
+	$(LD) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -lvc
 
 clean:
 	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~
