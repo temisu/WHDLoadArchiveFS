@@ -13,9 +13,9 @@ LIB	=
 else
 AS	= vasmm68k_mot
 CC	= vc
-CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -O2
+CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
 AFLAGS	= -Fhunk -I$(INCLUDEOS3)
-LDFLAGS =
+LDFLAGS = -sc -O2 -final
 INTEGRATION_OBJ = archivefs_integration_amiga.o
 LIB	= WHDLoad.VFS
 endif

@@ -32,7 +32,7 @@ struct archivefs_zipDecompressState
 	uint8_t		history[32768];
 };
 
-extern void archivefs_zipDecompressInitialize(struct archivefs_zipDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength);
-extern int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
+void archivefs_zipDecompressInitialize(struct archivefs_zipDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength);
+int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
 
 #endif

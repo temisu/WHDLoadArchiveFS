@@ -18,6 +18,6 @@ struct archivefs_lha_file_state
 };
 
 struct archivefs_state;
-extern int archivefs_lha_initialize(struct archivefs_state *archive);
+int archivefs_lha_initialize(struct archivefs_state *archive);
 
 #endif

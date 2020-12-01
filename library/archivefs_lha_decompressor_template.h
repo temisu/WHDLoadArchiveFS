@@ -3,7 +3,7 @@
 /* Skip and DecodePartial are almost the same, still different enough */
 
 	uint32_t pos=state->rawPos,spaceLength,blockLength=state->blockRemaining;
-	uint32_t symbol=state->remainingRepeat,distance=state->distance;
+	uint16_t symbol=state->remainingRepeat,distance=state->distance;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 	uint32_t bufferPos=0;
 #endif
@@ -50,8 +50,7 @@
 		}
 		blockLength--;
 
-		symbol=ret=archivefs_lhaHuffmanDecode(state,state->symbolTree);
-		if (ret<0) return ret;
+		archivefs_lhaHuffmanDecode(symbol,state,state->symbolTree);
 		if (symbol<256U)
 		{
 			history[historyPos++]=symbol;

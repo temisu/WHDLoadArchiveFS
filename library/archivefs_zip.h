@@ -18,6 +18,6 @@ struct archivefs_zip_file_state
 };
 
 struct archivefs_state;
-extern int archivefs_zip_initialize(struct archivefs_state *archive);
+int archivefs_zip_initialize(struct archivefs_state *archive);
 
 #endif

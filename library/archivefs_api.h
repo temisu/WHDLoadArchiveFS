@@ -19,6 +19,9 @@ typedef int int32_t;
 #ifndef uint16_t
 typedef unsigned short uint16_t;
 #endif
+#ifndef int16_t
+typedef short int16_t;
+#endif
 #ifndef uint8_t
 typedef unsigned char uint8_t;
 #endif
@@ -85,7 +88,7 @@ typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
 	* ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
 	* ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */
-extern int archivefs_initialize(void **archive,const char *filename);
+int archivefs_initialize(void **archive,const char *filename);
 
 /*
    Uninitialize archive. frees all memory
@@ -96,7 +99,7 @@ extern int archivefs_initialize(void **archive,const char *filename);
    Notable error codes:
 	* none
 */
-extern int archivefs_uninitialize(void *archive);
+int archivefs_uninitialize(void *archive);
 
 /*
    Get file size. Does not allocate memory
@@ -109,7 +112,7 @@ extern int archivefs_uninitialize(void *archive);
 	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
 	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
-extern int32_t archivefs_getFileSize(void *archive,const char *name);
+int32_t archivefs_getFileSize(void *archive,const char *name);
 
 /*
    Read (chosen) files into fileCache.
@@ -125,7 +128,7 @@ extern int32_t archivefs_getFileSize(void *archive,const char *name);
 	* Pass through errors from archivefs_integration
 	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 */
-extern int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
+int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
 
 /*
    Query FIB of all the entries in the archive.
@@ -138,7 +141,7 @@ extern int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
    Notable error codes:
 	* none
 */
-extern int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
+int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
 
 /*
    Read a file
@@ -158,7 +161,7 @@ extern int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc
 	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
 	* ARCHIVEFS_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
-extern int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint32_t length,uint32_t offset);
+int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint32_t length,uint32_t offset);
 
 /*
    Returns description for error code
@@ -167,6 +170,6 @@ extern int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint
    Returns:
         * Pointer to a string for the error description
 */
-extern const char *archivefs_getErrorString(int error_code);
+const char *archivefs_getErrorString(int error_code);
 
 #endif

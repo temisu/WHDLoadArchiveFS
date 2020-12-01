@@ -28,7 +28,7 @@ struct archivefs_lhaDecompressState
 	*/
 	uint32_t	method;		/* 4 = LH4, 5 = LH5 */
 
-	uint32_t	blockRemaining;
+	uint16_t	blockRemaining;
 	uint16_t	remainingRepeat;
 	uint16_t	distance;
 
@@ -41,7 +41,7 @@ struct archivefs_lhaDecompressState
 	uint8_t		history[8192];
 };
 
-extern void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method);
-extern int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
+void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method);
+int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
 
 #endif

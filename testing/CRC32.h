@@ -5,6 +5,6 @@
 
 #include "archivefs_api.h"
 
-extern uint32_t CRC32(const uint8_t *ptr,uint32_t len);
+uint32_t CRC32(const uint8_t *ptr,uint32_t len);
 
 #endif
