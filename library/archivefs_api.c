@@ -74,37 +74,55 @@ int archivefs_initialize(void **_archive,const char *filename)
 {
 	int ret;
 	uint8_t hdr[3];
+	uint32_t fileLength;
+	uint8_t blockShift;
+	void *file;
 	struct archivefs_combined_state *combinedState;
 
 	archivefs_integration_initialize();
+	ret=archivefs_integration_fileOpen(filename,&fileLength,&blockShift,&file);
+	if (ret)
+	{
+		archivefs_integration_uninitialize();
+		*_archive=0;
+		return ret;
+	}
 
-	combinedState=archivefs_malloc(sizeof(struct archivefs_combined_state));
+	combinedState=archivefs_malloc(sizeof(struct archivefs_combined_state)+(1U<<blockShift)-1U);
 	if (!combinedState)
+	{
+		archivefs_integration_fileClose(combinedState->archive.file);
+		archivefs_integration_uninitialize();
+		*_archive=0;
 		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+	}
+
+	combinedState->archive.file=file;
+	combinedState->archive.filePos=0;
+	combinedState->archive.fileLength=fileLength;
+
+	combinedState->archive.blockShift=blockShift;
+	combinedState->archive.blockIndex=~0U;
+	combinedState->archive.blockPos=0;
+	combinedState->archive.blockLength=0;
+
+	combinedState->archive.firstEntry=0;
+	combinedState->archive.lastEntry=0;
+
 	combinedState->archive.uninitialize=0;
+
 	combinedState->fileState.archive=&combinedState->archive;
 
-	ret=archivefs_integration_fileOpen(filename,&combinedState->archive.fileLength,&combinedState->archive.file);
+	combinedState->currentFile=0;
+
 	if (!ret)
-	{
-		combinedState->archive.firstEntry=0;
-		combinedState->archive.lastEntry=0;
-		combinedState->archive.filePos=0;
-		combinedState->currentFile=0;
-	} else {
-		combinedState->archive.file=0;
-	}
+		ret=archivefs_common_read(hdr,3,2,&combinedState->archive);
 
 	if (!ret)
 	{
 		/* although not good enough for the generic case, this works for amiga lha/zip archives */
-		ret=archivefs_common_simpleRead(hdr,3,2,&combinedState->archive);
-		if (ret<0 && ret!=3) ret=ARCHIVEFS_ERROR_INVALID_FORMAT;
-		else
-		{
-			if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->archive);
-				else ret=archivefs_zip_initialize(&combinedState->archive);
-		}
+		if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->archive);
+			else ret=archivefs_zip_initialize(&combinedState->archive);
 	}
 
 	if (ret) archivefs_uninitialize(combinedState);

@@ -27,8 +27,10 @@ void archivefs_integration_initialize()
 {
 #ifdef ARCHIVEFS_STANDALONE
 	if (!archivefs_integration_initCounter++)
+	{
 		SysBase=(*((struct ExecBase **) 4U));
 		DOSBase=(void*)OpenLibrary("dos.library",37);
+	}
 #endif
 }
 
@@ -40,7 +42,7 @@ void archivefs_integration_uninitialize()
 #endif
 }
 
-int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **file)
+int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t *blockShift,void **file)
 {
 	BPTR fd,lock;
 	struct FileInfoBlock fib;
@@ -61,6 +63,8 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **
 		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
 	*file=(void*)fd;
 	*length=fib.fib_Size;
+	/* TODO: real block size */
+	*blockShift=9U;
 	return 0;
 }
 

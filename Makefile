@@ -13,7 +13,6 @@ LIB	=
 else
 AS	= vasmm68k_mot
 CC	= vc
-LD	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -O2
 AFLAGS	= -Fhunk -I$(INCLUDEOS3)
 LDFLAGS =
@@ -24,7 +23,7 @@ endif
 PROG	= test
 
 OBJS	= $(addprefix obj/,archivefs_api.o archivefs_common.o archivefs_lha.o archivefs_zip.o \
-	archivefs_huffman_decoder.o archivefs_lha_decompressor.o)
+	archivefs_huffman_decoder.o archivefs_lha_decompressor.o archivefs_zip_decompressor.o)
 
 OBJS_TEST = $(addprefix obj/,test.o CRC32.o $(INTEGRATION_OBJ)) $(OBJS)
 OBJS_LIB = $(addprefix obj/,archivefs_header.o archivefs_integration_amiga_standalone.o) $(OBJS)
@@ -51,7 +50,7 @@ $(PROG): $(OBJS_TEST)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 $(LIB): $(OBJS_LIB)
-	$(LD) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -lvc
+	$(CC) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -lvc -lamiga
 
 clean:
 	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~

@@ -17,8 +17,12 @@
 	return i&0x7fffU; \
 }
 
+extern uint16_t archivefs_HuffmanInsert(uint16_t *nodes,uint16_t nodeCount,uint16_t length,uint32_t code,uint16_t value);
+
 extern int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLengths,uint32_t bitTableLength);
 
 extern void archivefs_HuffmanCreateEmptyTable(uint16_t *nodes,uint16_t value);
+
+extern void archivefs_HuffmanReset(uint16_t *nodes);
 
 #endif

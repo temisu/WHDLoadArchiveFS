@@ -55,6 +55,12 @@ struct archivefs_state
 	uint32_t				filePos;
 	uint32_t				fileLength;
 
+	/* internal buffering */
+	uint8_t					blockShift;
+	uint32_t				blockIndex;
+	uint32_t				blockPos;
+	uint32_t				blockLength;
+
 	/* contents of the archive */
 	struct archivefs_cached_file_entry	*firstEntry;
 	struct archivefs_cached_file_entry	*lastEntry;
@@ -67,15 +73,18 @@ struct archivefs_state
 	union
 	{
 		struct archivefs_lha_state	lha;
+		struct archivefs_zip_state	zip;
 	} state;
+
+	uint8_t					blockData[1];
 };
 
 struct archivefs_combined_state
 {
-	struct archivefs_state			archive;
-	struct archivefs_file_state		fileState;
-
 	struct archivefs_cached_file_entry	*currentFile;
+
+	struct archivefs_file_state		fileState;
+	struct archivefs_state			archive;
 };
 
 struct FIB

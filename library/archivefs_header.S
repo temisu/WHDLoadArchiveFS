@@ -1,11 +1,10 @@
 ; Copyright (C) Teemu Suutari
 
-	INCDIR include
-	INCLUDE whdvfs.i
-
 	SECTION code,CODE
 
-	WVFS_HEADER
+	moveq	#-1,d0
+	rts
+	dc.b	"WHDLDVFS"
 	dc.w	1	; version
 	dc.w	0	; flags
 	dc.l	_name

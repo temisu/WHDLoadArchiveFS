@@ -3,6 +3,7 @@
 #include "archivefs_private.h"
 #include "archivefs_common.h"
 #include "archivefs_integration.h"
+#include "archivefs_zip_decompressor.h"
 
 #define HDR_EOCD_SIZE (22)
 #define HDR_EOCD_OFFSET_HDR (0)
@@ -54,7 +55,7 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 	if (entry->dataType&0x100U)
 	{
 		/* yay! now go for the local file header */
-		if ((ret=archivefs_common_simpleRead(hdr,HDR_LFH_SIZE,entry->dataOffset,archive))<0) return ret;
+		if ((ret=archivefs_common_read(hdr,HDR_LFH_SIZE,entry->dataOffset,archive))<0) return ret;
 		/* lets keep it minimal */
 		if (GET_LE32(hdr)!=0x4034b50U)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -65,6 +66,12 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 		entry->dataType&=~0x100U;
 	}
 	file_state->state.zip.entry=entry;
+	if (entry->dataType)
+	{
+		/* again a bit hackish. Have the decompression state as part of the main state... */
+		file_state->state.zip.decompressState=file_state->archive->state.zip.decompressState;
+		archivefs_zipDecompressInitialize(file_state->state.zip.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length);
+	}
 	return 0;
 }
 
@@ -72,17 +79,24 @@ static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *fi
 {
 	/* does not check file type */
 	struct archivefs_cached_file_entry *entry;
+	int ret;
 
 	entry=file_state->state.zip.entry;
-	if (entry->dataType)
-		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 	if (length+offset>entry->length)
 		return ARCHIVEFS_ERROR_INVALID_READ;
-	return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
+	if (entry->dataType)
+	{
+		return archivefs_zipDecompress(file_state->state.zip.decompressState,dest,length,offset);
+	} else {
+		if ((ret=archivefs_common_read(dest,length,entry->dataOffset+offset,file_state->archive))<0) return ret;
+		return length;
+	}
 }
 
 static int archivefs_zip_uninitialize(struct archivefs_state *archive)
 {
+	if (archive->state.zip.decompressState)
+		archivefs_free(archive->state.zip.decompressState);
 	return 0;
 }
 
@@ -94,12 +108,18 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 	uint32_t cdOffset,cdLength,packedLength,rawLength,mtime,numEntries,nameLength,extraLength,commentLength,dataType,i,j,k;
 	uint32_t offset,attributes,cfhLength;
 	int ret,isAmiga,isDir;
+	int usesCompression=0;
 	uint8_t *stringSpace;
+
+	archive->state.zip.decompressState=0;
+	archive->fileOpen=archivefs_zip_fileOpen;
+	archive->fileRead=archivefs_zip_fileRead;
+	archive->uninitialize=archivefs_zip_uninitialize;
 
 	/* First thing first: Find end of central directory */
 	if (archive->fileLength<HDR_EOCD_SIZE)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	if ((ret=archivefs_common_simpleRead(hdr,HDR_EOCD_SIZE,archive->fileLength-HDR_EOCD_SIZE,archive))<0) return ret;
+	if ((ret=archivefs_common_read(hdr,HDR_EOCD_SIZE,archive->fileLength-HDR_EOCD_SIZE,archive))<0) return ret;
 	for (i=0;i<65536U;i++)
 	{
 		if (GET_LE32(hdr)==0x6054b50U && GET_LE16(hdr+HDR_EOCD_OFFSET_COMMENTLENGTH)==i)
@@ -109,7 +129,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		for (j=HDR_EOCD_SIZE-1;j;j--)
 			hdr[j]=hdr[j-1];
-		if ((ret=archivefs_common_simpleRead(hdr,1,archive->fileLength-HDR_EOCD_SIZE-i-1,archive))<0) return ret;
+		if ((ret=archivefs_common_read(hdr,1,archive->fileLength-HDR_EOCD_SIZE-i-1,archive))<0) return ret;
 	}
 	if (i==65536U)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -128,7 +148,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 
 	for (i=0;i<numEntries;i++)
 	{
-		if ((ret=archivefs_common_simpleRead(hdr,HDR_CFH_SIZE,cdOffset,archive))<0) return ret;
+		if ((ret=archivefs_common_read(hdr,HDR_CFH_SIZE,cdOffset,archive))<0) return ret;
 		if (GET_LE32(hdr)!=0x2014b50U)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		/* patching, encryption */
@@ -147,11 +167,8 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 				return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
 			dataType=1;
 		}
-/* until we support compression... */
-#if 1
-		if (dataType)
-			return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
-#endif
+		if (dataType) usesCompression=1;
+
 		if (GET_LE16(hdr+HDR_CFH_OFFSET_DISK_NUMBER_START))
 			 return ARCHIVEFS_ERROR_INVALID_FORMAT;
 
@@ -194,7 +211,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 		*entry->filenote=0;
 		if (commentLength)
 		{
-			if ((ret=archivefs_common_simpleRead(entry->filenote,commentLength,cdOffset+HDR_CFH_SIZE+nameLength+extraLength,archive))<0)
+			if ((ret=archivefs_common_read(entry->filenote,commentLength,cdOffset+HDR_CFH_SIZE+nameLength+extraLength,archive))<0)
 			{
 				archivefs_free(entry);
 				return ret;
@@ -205,7 +222,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 		*stringSpace=0;
 		if (nameLength)
 		{
-			if ((ret=archivefs_common_simpleRead(stringSpace,nameLength,cdOffset+HDR_CFH_SIZE,archive))<0)
+			if ((ret=archivefs_common_read(stringSpace,nameLength,cdOffset+HDR_CFH_SIZE,archive))<0)
 			{
 				archivefs_free(entry);
 				return ret;
@@ -262,8 +279,11 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 		cdLength-=cfhLength;
 	}
 
-	archive->fileOpen=archivefs_zip_fileOpen;
-	archive->fileRead=archivefs_zip_fileRead;
-	archive->uninitialize=archivefs_zip_uninitialize;
+	if (usesCompression)
+	{
+		archive->state.zip.decompressState=archivefs_malloc(sizeof(struct archivefs_zipDecompressState));
+		if (!archive->state.zip.decompressState)
+			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+	}
 	return 0;
 }

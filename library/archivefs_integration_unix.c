@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 void *archivefs_malloc(uint32_t size)
 {
@@ -27,7 +28,7 @@ void archivefs_integration_uninitialize()
 	// nothing needed
 }
 
-int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **file)
+int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t *blockShift,void **file)
 {
 	int fd,l;
 
@@ -38,6 +39,7 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **
 	if (l<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
 	*length=l;
+	*blockShift=9U;
 	l=lseek(fd,0,SEEK_SET);
 	if (l<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;

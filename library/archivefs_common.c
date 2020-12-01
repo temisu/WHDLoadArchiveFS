@@ -3,19 +3,159 @@
 #include "archivefs_private.h"
 #include "archivefs_integration.h"
 
-int32_t archivefs_common_simpleRead(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
+static int32_t archivefs_common_readPartial(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
 {
-	int32_t ret;
+	int ret;
+
 	if (offset!=archive->filePos)
 	{
 		if ((ret=archivefs_integration_fileSeek(offset,archive->file))<0) return ret;
 		archive->filePos=offset;
 	}
+
 	ret=archivefs_integration_fileRead(dest,length,archive->file);
 	if (ret<0) return ret;
 	archive->filePos+=ret;
 	if (ret!=length) return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	return ret;
+	return length;
+}
+
+static int32_t archivefs_common_readBlockRaw(void *dest,uint32_t blockIndex,struct archivefs_state *archive)
+{
+	uint32_t offset=blockIndex<<archive->blockShift;
+	uint32_t blockSize=1<<archive->blockShift;
+	uint32_t length=archive->fileLength-offset;
+
+	if (length>blockSize) length=blockSize;
+	return archivefs_common_readPartial(dest,length,offset,archive);
+}
+
+int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state *archive)
+{
+	int ret;
+
+	if (blockIndex==archive->blockIndex) return 0;
+	ret=archivefs_common_readBlockRaw(archive->blockData,blockIndex,archive);
+	if (ret>=0)
+	{
+		archive->blockIndex=blockIndex;
+		archive->blockPos=0;
+		archive->blockLength=ret;
+		return 0;
+	} else {
+		archive->blockIndex=~0U;
+		archive->blockPos=0;
+		archive->blockLength=0;
+		return ret;
+	}
+}
+
+int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *archive)
+{
+	uint32_t blockIndex=offset>>archive->blockShift;
+	int ret;
+
+	if ((ret=archivefs_common_readBlockBuffer(blockIndex,archive))<0) return ret;
+	archive->blockPos=offset&((1<<archive->blockShift)-1U);
+	if (archive->blockPos>=archive->blockLength)
+		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+	return 0;
+}
+
+/* TODO: make it proper, or use library */
+static void archivefs_memcpy(void *dest,const void *src,uint32_t length)
+{
+	uint8_t *_dest=dest;
+	const uint8_t *_src=src;
+	while (length--) *(_dest++)=*(_src++);
+}
+
+static int32_t archivefs_common_copyBlock(uint8_t *dest,uint32_t startBlock,uint32_t maxBlock,uint32_t currentBufferBlock,uint32_t length,uint32_t offset,struct archivefs_state *archive)
+{
+	uint32_t currentBlockLength,copyOffset;
+	uint8_t blockShift=archive->blockShift;
+	uint32_t blockSize=1U<<blockShift;
+
+	/* we are interested about the tail length of the last buffer (if applicable) */
+	if (currentBufferBlock==startBlock)
+	{
+		currentBlockLength=(offset&(blockSize-1U))+length;
+		if (currentBlockLength>blockSize) currentBlockLength=blockSize;
+		copyOffset=offset&(blockSize-1U);
+	} else if (currentBufferBlock==maxBlock-1U) {
+		currentBlockLength=(offset+length)&(blockSize-1U);
+		if (!currentBlockLength) currentBlockLength=blockSize;
+		copyOffset=0;
+	} else {
+		currentBlockLength=blockSize;
+		copyOffset=0;
+	}
+	if (currentBlockLength>archive->blockLength)
+		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+	archivefs_memcpy(dest,archive->blockData+copyOffset,currentBlockLength-copyOffset);
+	return currentBlockLength-copyOffset;
+}
+
+int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
+{
+	int ret;
+	uint32_t i,blockSize,startBlock,maxBlock,currentBufferBlock,newBufferBlock,currentBlockLength;
+	uint32_t destOffset,destCopied;
+	uint8_t blockShift;
+
+	if (!length) return 0;
+
+	blockShift=archive->blockShift;
+	blockSize=1U<<blockShift;
+	startBlock=offset>>blockShift;
+	maxBlock=(offset+length+blockSize-1)>>blockShift;
+	currentBufferBlock=archive->blockIndex;
+	/* We could make buffering logic better here for the choice of the buffered block... */
+	newBufferBlock=maxBlock-1;
+
+	if (startBlock<=currentBufferBlock && currentBufferBlock<maxBlock)
+	{
+		if (currentBufferBlock==startBlock) destOffset=0;
+			else destOffset=((blockSize-offset)&(blockSize-1U))+((currentBufferBlock-startBlock-1U)<<blockShift);
+		destCopied=ret=archivefs_common_copyBlock((uint8_t*)dest+destOffset,startBlock,maxBlock,currentBufferBlock,length,offset,archive);
+		if (ret<0) return ret;
+	} else destCopied=0;
+
+	for (i=startBlock;i<maxBlock;i++)
+	{
+		if (i==currentBufferBlock)
+		{
+			dest=(uint8_t*)dest+destCopied;
+			continue;
+		}
+		if (i==newBufferBlock)
+		{
+			if ((ret=archivefs_common_readBlockBuffer(i,archive))<0) return ret;
+			ret=archivefs_common_copyBlock(dest,startBlock,maxBlock,i,length,offset,archive);
+			if (ret<0) return ret;
+			dest=(uint8_t*)dest+ret;
+		} else {
+			if (i==startBlock)
+			{
+				/* possible partial read */
+				currentBlockLength=(offset&(blockSize-1U))+length;
+				if (currentBlockLength>blockSize) currentBlockLength=blockSize;
+				currentBlockLength-=offset&(blockSize-1U);
+				if ((ret=archivefs_common_readPartial(dest,currentBlockLength,offset,archive))<0) return ret;
+				dest=(uint8_t*)dest+currentBlockLength;
+			} else if (i==maxBlock-1U) {
+				/* another possible partial read */
+				currentBlockLength=(offset+length)&(blockSize-1U);
+				if (!currentBlockLength) currentBlockLength=blockSize;
+				if ((ret=archivefs_common_readPartial(dest,currentBlockLength,((blockSize-offset)&(blockSize-1U))+((i-startBlock-1U)<<blockShift),archive))<0) return ret;
+			} else {
+				/* the most common case. In middle of the file, throw away block directly to dest buffer */
+				if ((ret=archivefs_common_readBlockRaw(dest,i,archive))<0) return ret;
+				dest=(uint8_t*)dest+blockSize;
+			}
+		}
+	}
+	return 0;
 }
 
 static int archivefs_isLeapYear(uint32_t year)

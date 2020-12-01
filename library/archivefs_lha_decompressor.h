@@ -16,8 +16,6 @@ struct archivefs_lhaDecompressState
 	uint32_t	rawLength;
 	uint32_t	rawPos;
 
-	uint16_t	inputBufferLength;
-	uint16_t	inputBufferPos;
 	uint8_t		accumulator;
 	uint8_t		bitsLeft;
 
@@ -41,7 +39,6 @@ struct archivefs_lhaDecompressState
 	uint16_t	distanceTree[16*2];
 
 	uint8_t		history[8192];
-	uint8_t		inputBuffer[ARCHIVEFS_INPUT_BUFFER_LENGTH];
 };
 
 extern void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method);

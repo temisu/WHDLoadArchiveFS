@@ -58,14 +58,14 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	uint8_t *stringSpace;
 
 	*dest=0;
-	if ((ret=archivefs_common_simpleRead(hdr,HDR_L0_SIZE,offset,archive))<0) return ret;
+	if ((ret=archivefs_common_read(hdr,HDR_L0_SIZE,offset,archive))<0) return ret;
 
 	/* Basic stuff */
 	level=hdr[HDR_L0_OFFSET_LEVEL];
 	if (level>2)
 		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
 	if (level==2)
-		if ((ret=archivefs_common_simpleRead(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,archive))<0) return ret;
+		if ((ret=archivefs_common_read(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,archive))<0) return ret;
 
 	if (hdr[HDR_L0_OFFSET_METHOD]!='-'||hdr[HDR_L0_OFFSET_METHOD+1]!='l'||hdr[HDR_L0_OFFSET_METHOD+2]!='h'||hdr[HDR_L0_OFFSET_METHOD+4]!='-')
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -127,7 +127,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		} else {
 			if (hdrSize<HDR_L0_SIZE+HDR_L1_MID_SIZE+nameLength)
 				return ARCHIVEFS_ERROR_INVALID_FORMAT;
-			if ((ret=archivefs_common_simpleRead(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,archive))<0) return ret;
+			if ((ret=archivefs_common_read(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,archive))<0) return ret;
 			isAmiga=hdr[0]=='A';
 			if (offset+hdrSize>archive->fileLength)
 				return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -147,7 +147,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 				i+=2;
 				break;
 			}
-			if ((ret=archivefs_common_simpleRead(hdr,3,offset,archive))<0) return ret;
+			if ((ret=archivefs_common_read(hdr,3,offset,archive))<0) return ret;
 			offset+=2;
 			i+=2;
 			extraLength=GET_LE16(hdr);
@@ -172,7 +172,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 				case HDR_EXTRA_ATTRIBUTES_ID:
 				if (extraLength<1)
 					return ARCHIVEFS_ERROR_INVALID_FORMAT;
-				if ((ret=archivefs_common_simpleRead(hdr,1,offset,archive))<0) return ret;
+				if ((ret=archivefs_common_read(hdr,1,offset,archive))<0) return ret;
 				attributes=hdr[0];
 				break;
 
@@ -242,7 +242,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	/* now process strings */
 	if (pathLength)
 	{
-		if ((ret=archivefs_common_simpleRead(stringSpace,pathLength,pathOffset,archive))<0) return ret;
+		if ((ret=archivefs_common_read(stringSpace,pathLength,pathOffset,archive))<0) return ret;
 		for (i=0;i<pathLength;i++)
 			if ((uint8_t)(stringSpace[i])==0xffU) stringSpace[i]='/';
 
@@ -254,14 +254,14 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	}
 
 	if (nameLength)
-		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength,nameLength,nameOffset,archive))<0) return ret;
+		if ((ret=archivefs_common_read(stringSpace+pathLength,nameLength,nameOffset,archive))<0) return ret;
 	if (noteLength)
 	{
 		/* lets make level2 look like level0-1 filenote. it is easier this way, although it requires string search later
 		   level1 is still the most common case and level2 is just corner case
 		 */
 		stringSpace[pathLength+nameLength]=0;
-		if ((ret=archivefs_common_simpleRead(stringSpace+pathLength+nameLength+1,noteLength,noteOffset,archive))<0) return ret;
+		if ((ret=archivefs_common_read(stringSpace+pathLength+nameLength+1,noteLength,noteOffset,archive))<0) return ret;
 		nameLength+=noteLength+1;
 	}
 	if (!level)
@@ -380,6 +380,7 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 {
 	/* does not check file type */
 	const struct archivefs_cached_file_entry *entry;
+	int ret;
 
 	entry=file_state->state.lha.entry;
 	if (length+offset>entry->length)
@@ -388,7 +389,8 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 	{
 		return archivefs_lhaDecompress(file_state->state.lha.decompressState,dest,length,offset);
 	} else {
-		return archivefs_common_simpleRead(dest,length,entry->dataOffset+offset,file_state->archive);
+		if ((ret=archivefs_common_read(dest,length,entry->dataOffset+offset,file_state->archive))<0) return ret;
+		return length;
 	}
 }
 
@@ -405,6 +407,11 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 	int usesCompression=0;
 	int32_t offset=0;
 
+	archive->state.lha.decompressState=0;
+	archive->fileOpen=archivefs_lha_fileOpen;
+	archive->fileRead=archivefs_lha_fileRead;
+	archive->uninitialize=archivefs_lha_uninitialize;
+
 	/* there might (should) be a stop character at the end of the file */
 	while (offset+1<archive->fileLength)
 	{
@@ -417,15 +424,12 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 		if (entry->dataType) usesCompression=1;
 		archivefs_common_insertFileEntry(archive,entry);
 	}
-	archive->fileOpen=archivefs_lha_fileOpen;
-	archive->fileRead=archivefs_lha_fileRead;
-	archive->uninitialize=archivefs_lha_uninitialize;
 
 	if (usesCompression)
 	{
 		archive->state.lha.decompressState=archivefs_malloc(sizeof(struct archivefs_lhaDecompressState));
 		if (!archive->state.lha.decompressState)
 			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
-	} else archive->state.lha.decompressState=0;
+	}
 	return 0;
 }

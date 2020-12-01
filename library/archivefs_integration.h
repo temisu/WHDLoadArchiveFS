@@ -30,12 +30,13 @@ extern void archivefs_integration_uninitialize();
    Parameters:
 	* filename - filename to open
 	* length - return parameter for the file length
+	* blockShift - return parameter for the recommended block size 1<<blockShift
 	* file - return parameter for the returned file, anything else except null
    Returns:
 	* 0 if succesfull
 	* negative values in case of errors - these negative values are passed through on archivefs_* functions are their return values
 */
-extern int archivefs_integration_fileOpen(const char *filename,uint32_t *length,void **file);
+extern int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t *blockShift,void **file);
 
 /*
    archivefs_integration_fileClose will close the file opened by archivefs_integration_fileOpen

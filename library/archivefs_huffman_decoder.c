@@ -2,7 +2,7 @@
 
 #include "archivefs_huffman_decoder.h"
 
-static uint16_t archivefs_HuffmanInsert(uint16_t *nodes,uint16_t nodeCount,uint16_t length,uint32_t code,uint16_t value)
+uint16_t archivefs_HuffmanInsert(uint16_t *nodes,uint16_t nodeCount,uint16_t length,uint32_t code,uint16_t value)
 {
 	int currentBit;
 	uint16_t i=0;
@@ -66,4 +66,9 @@ int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLength
 void archivefs_HuffmanCreateEmptyTable(uint16_t *nodes,uint16_t value)
 {
 	nodes[0]=value|0x8000U;
+}
+
+void archivefs_HuffmanReset(uint16_t *nodes)
+{
+	nodes[0]=0;
 }

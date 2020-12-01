@@ -5,37 +5,22 @@
 
 /* decompresses LH4 and LH5 files */
 
-static int archivefs_lhaReadNextBlock(struct archivefs_lhaDecompressState *state)
-{
-	uint32_t length;
-	int ret;
-	
-	length=state->fileLength-state->filePos;
-	if (!length)
-		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-	if (length>ARCHIVEFS_INPUT_BUFFER_LENGTH)
-		length=ARCHIVEFS_INPUT_BUFFER_LENGTH;
-	if ((ret=archivefs_common_simpleRead(state->inputBuffer,length,state->fileOffset+state->filePos,state->archive))<0) return ret;
-	state->filePos+=length;
-	state->inputBufferLength=length;
-	state->inputBufferPos=0;
-	return 0;
-}
-
 /* 31 bits max */
 static int32_t archivefs_lhaReadBits(struct archivefs_lhaDecompressState *state,uint8_t bits)
 {
 	uint32_t value=0;
 	int ret;
 	uint8_t length;
+	struct archivefs_state *archive;
 
 	while (bits)
 	{
 		if (!state->bitsLeft)
 		{
-			if (state->inputBufferPos==state->inputBufferLength)
-				if ((ret=archivefs_lhaReadNextBlock(state))<0) return ret;
-			state->accumulator=state->inputBuffer[state->inputBufferPos++];
+			archive=state->archive;
+			if (state->filePos==state->fileLength) return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+			archivefs_common_readNextByte(state->accumulator,archive);
+			state->filePos++;
 			state->bitsLeft=8U;
 		}
 		length=state->bitsLeft;
@@ -51,11 +36,14 @@ static int32_t archivefs_lhaReadBits(struct archivefs_lhaDecompressState *state,
 static int archivefs_lhaReadBit(struct archivefs_lhaDecompressState *state)
 {
 	int ret;
+	struct archivefs_state *archive;
+
 	if (!state->bitsLeft)
 	{
-		if (state->inputBufferPos==state->inputBufferLength)
-			if ((ret=archivefs_lhaReadNextBlock(state))<0) return ret;
-		state->accumulator=state->inputBuffer[state->inputBufferPos++];
+		archive=state->archive;
+		if (state->filePos==state->fileLength) return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		archivefs_common_readNextByte(state->accumulator,archive);
+		state->filePos++;
 		state->bitsLeft=7U;
 	} else state->bitsLeft--;
 	ret=(state->accumulator&0x80U)?1U:0;
@@ -75,8 +63,6 @@ void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *stat
 	state->rawLength=rawLength;
 	state->rawPos=0;
 
-	state->inputBufferLength=0;
-	state->inputBufferPos=0;
 	state->accumulator=0;
 	state->bitsLeft=0;
 
@@ -94,8 +80,6 @@ static void archivefs_lhaDecompressReset(struct archivefs_lhaDecompressState *st
 
 	state->rawPos=0;
 
-	state->inputBufferLength=0;
-	state->inputBufferPos=0;
 	state->accumulator=0;
 	state->bitsLeft=0;
 
@@ -297,6 +281,7 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 
 	if (offset<state->rawPos)
 		archivefs_lhaDecompressReset(state);
+	archivefs_common_initBlockBuffer(state->fileOffset+state->filePos,state->archive);
 	if (offset!=state->rawPos)
 	{
 		if ((ret=archivefs_lhaDecompressSkip(state,offset,mask))<0)
