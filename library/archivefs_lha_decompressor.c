@@ -5,42 +5,37 @@
 
 /* decompresses LH4 and LH5 files */
 
-#define archivefs_lhaReadBits(value,state,_bits) \
+#define archivefs_lhaReadBits(value,bits) \
 	do { \
-		uint8_t __bits=(_bits); \
-		while (__bits) \
+		uint8_t _bits=(bits); \
+		if ((state)->bitsLeft<_bits) \
 		{ \
-			uint8_t length=0; \
-			if (!(state)->bitsLeft) \
-			{ \
-				struct archivefs_state *archive; \
-				archive=(state)->archive; \
-				archivefs_common_readNextByte((state)->accumulator,archive); \
-				(state)->bitsLeft=8U; \
-			} \
-			length=(state)->bitsLeft; \
-			if (length>__bits) length=__bits; \
-			(value)=((value)<<length)|((state)->accumulator>>(8U-length)); \
-			(state)->accumulator<<=length; \
-			(state)->bitsLeft-=length; \
-			__bits-=length; \
+			struct archivefs_state *archive; \
+			(value)=((value)<<(state)->bitsLeft)|((state)->accumulator>>(16U-(state)->bitsLeft)); \
+			archive=(state)->archive; \
+			archivefs_common_readNextWord((state)->accumulator,archive); \
+			_bits-=(state)->bitsLeft; \
+			(state)->bitsLeft=16U; \
 		} \
+		(value)=((value)<<_bits)|((state)->accumulator>>(16U-_bits)); \
+		(state)->accumulator<<=_bits; \
+		(state)->bitsLeft-=_bits; \
 	} while (0)
 
-#define archivefs_lhaReadBit(state) \
+#define archivefs_lhaReadBit(incr) \
 	do { \
-		if (!state->bitsLeft) \
+		if (!(state)->bitsLeft) \
 		{ \
 			struct archivefs_state *archive; \
 			archive=state->archive; \
-			archivefs_common_readNextByte(state->accumulator,archive); \
-			state->bitsLeft=7U; \
-		} else state->bitsLeft--; \
-		(ret)=(int8_t)(state->accumulator)<0?1U:0; \
+			archivefs_common_readNextWord(state->accumulator,archive); \
+			state->bitsLeft=15U; \
+		} else (state)->bitsLeft--; \
+		if ((int16_t)(state->accumulator)<0) incr+=2; \
 		state->accumulator+=state->accumulator; \
 	} while (0)
 
-#define archivefs_lhaHuffmanDecode(symbol,state,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_lhaReadBit(state))
+#define archivefs_lhaHuffmanDecode(symbol,state,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_lhaReadBit)
 
 void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method)
 {
@@ -86,28 +81,29 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 	uint8_t value;
 
 	tableLength=0;
-	archivefs_lhaReadBits(tableLength,state,bits);
+	archivefs_lhaReadBits(tableLength,bits);
 	if (tableLength>length)
 		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 	if (!tableLength)
 	{
 		value=0;
-		archivefs_lhaReadBits(value,state,bits);
+		archivefs_lhaReadBits(value,bits);
 		archivefs_HuffmanCreateEmptyTable(nodes,value);
 		return 0;
 	}
 	for (i=0;i<tableLength;)
 	{
 		value=0;
-		archivefs_lhaReadBits(value,state,3U);
+		archivefs_lhaReadBits(value,3U);
 		if (value==7)
 		{
+			uint16_t tmp;
 			do
 			{
-				archivefs_lhaReadBit(state);
-				if (ret) value++;
-			} while (ret>0);
-			if (ret<0) return ret;
+				tmp=0;
+				archivefs_lhaReadBit(tmp);
+				if (tmp) value++;
+			} while (tmp);
 			if (value>31U)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 		}
@@ -115,7 +111,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 		if (i==3U && enableHole)
 		{
 			value=0;
-			archivefs_lhaReadBits(value,state,2U);
+			archivefs_lhaReadBits(value,2U);
 			if (i+value>length)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 			while (value--)
@@ -136,17 +132,17 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 	uint8_t symbols[511];
 
 	blockRemaining=0;
-	archivefs_lhaReadBits(blockRemaining,state,16U);
+	archivefs_lhaReadBits(blockRemaining,16U);
 	if (!blockRemaining) blockRemaining=0x10000U;
 
 	if ((ret=archivefs_lhaCreateSimpleTable(state,state->symbolTree,19U,5U,1))<0) return ret;
 
 	tableLength=0;
-	archivefs_lhaReadBits(tableLength,state,9U);
+	archivefs_lhaReadBits(tableLength,9U);
 	if (!tableLength)
 	{
 		value=0;
-		archivefs_lhaReadBits(value,state,9U);
+		archivefs_lhaReadBits(value,9U);
 		archivefs_HuffmanCreateEmptyTable(state->symbolTree,value);
 		return 0;
 	}
@@ -162,14 +158,14 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 			case 1U:
 			value=0;
 			rep=0;
-			archivefs_lhaReadBits(rep,state,4U);
+			archivefs_lhaReadBits(rep,4U);
 			rep+=3U;
 			break;
 
 			case 2U:
 			value=0;
 			rep=0;
-			archivefs_lhaReadBits(rep,state,9U);
+			archivefs_lhaReadBits(rep,9U);
 			rep+=20U;
 			break;
 
@@ -188,20 +184,19 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 	return blockRemaining;
 }
 
-#define archivefs_lhaDecodeDistance(distance,state,mask) \
+#define archivefs_lhaDecodeDistance(distance,state) \
 	do { \
 		uint16_t distanceBits; \
 		archivefs_lhaHuffmanDecode(distanceBits,state,state->distanceTree); \
 		if (distanceBits) \
 		{ \
 			distance=1U; \
-			archivefs_lhaReadBits(distance,state,distanceBits-1); \
-			distance&=mask; \
+			archivefs_lhaReadBits(distance,distanceBits-1); \
 			distance++; \
 		} else distance=1; \
 	} while (0)
 
-static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint16_t mask)
+static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *state,uint8_t *dest)
 {
 	uint32_t length=state->rawLength;
 	uint32_t pos,blockLength=0;
@@ -222,7 +217,7 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 		{
 			dest[pos++]=symbol;
 		} else {
-			archivefs_lhaDecodeDistance(distance,state,mask);
+			archivefs_lhaDecodeDistance(distance,state);
 
 			symbol-=253U;
 			if (pos+symbol>length) symbol=length-pos;
@@ -247,13 +242,13 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 	return 0;
 }
 
-static int archivefs_lhaDecompressSkip(struct archivefs_lhaDecompressState *state,uint32_t targetLength,uint16_t mask)
+static int archivefs_lhaDecompressSkip(struct archivefs_lhaDecompressState *state,uint32_t targetLength)
 {
 #define ARCHIVEFS_LHA_DECOMPRESS_SKIP 1
 #include "archivefs_lha_decompressor_template.h"
 }
 
-static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t targetLength,uint16_t mask)
+static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t targetLength)
 {
 #undef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 #include "archivefs_lha_decompressor_template.h"
@@ -261,15 +256,23 @@ static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *s
 
 int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset)
 {
-	uint16_t mask=(state->method==4)?0xfffU:0x1fffU;
 	int ret;
 
 	if (offset<state->rawPos)
 		archivefs_lhaDecompressReset(state);
 	archivefs_common_initBlockBuffer(state->fileOffset+state->filePos,state->archive);
+	if (!state->filePos && (state->fileOffset&1U))
+	{
+		struct archivefs_state *archive;
+
+		archive=state->archive;
+		archivefs_common_readNextByte(state->accumulator,archive);
+		state->bitsLeft=8U;
+		state->accumulator<<=8U;
+	}
 	if (offset!=state->rawPos)
 	{
-		if ((ret=archivefs_lhaDecompressSkip(state,offset,mask))<0)
+		if ((ret=archivefs_lhaDecompressSkip(state,offset))<0)
 		{
 			archivefs_lhaDecompressReset(state);
 			return ret;
@@ -277,13 +280,13 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 	}
 	if (!offset && length==state->rawLength)
 	{
-		if ((ret=archivefs_lhaDecompressFull(state,dest,mask))<0)
+		if ((ret=archivefs_lhaDecompressFull(state,dest))<0)
 		{
 			archivefs_lhaDecompressReset(state);
 			return ret;
 		}
 	} else {
-		if ((ret=archivefs_lhaDecompressPartial(state,dest,offset+length,mask))<0)
+		if ((ret=archivefs_lhaDecompressPartial(state,dest,offset+length))<0)
 		{
 			archivefs_lhaDecompressReset(state);
 			return ret;

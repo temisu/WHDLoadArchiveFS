@@ -16,7 +16,7 @@ struct archivefs_lhaDecompressState
 	uint32_t	rawLength;
 	uint32_t	rawPos;
 
-	uint8_t		accumulator;
+	uint16_t	accumulator;
 	uint8_t		bitsLeft;
 
 	/*

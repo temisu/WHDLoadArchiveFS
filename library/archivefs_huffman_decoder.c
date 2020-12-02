@@ -11,19 +11,19 @@ uint16_t archivefs_HuffmanInsert(uint16_t *nodes,uint16_t nodeCount,uint16_t len
 	{
 		if (!nodes[i])
 		{
-			nodes[i]=nodeCount;
+			nodes[i]=nodeCount<<1;
 			i=nodeCount;
 			nodeCount+=2;
 			nodes[i]=0;
 			nodes[i+1]=0;
 		} else {
-			i=nodes[i];
+			i=nodes[i]>>1;
 		}
 		i+=(code>>currentBit)&1U;
-		if (nodes[i]&0x8000U)
+		if ((int16_t)(nodes[i])<0)
 			return 0;
 	}
-	nodes[i]=value|0x8000U;
+	nodes[i]=~value;
 	return nodeCount;
 }
 
@@ -65,7 +65,7 @@ int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLength
 
 void archivefs_HuffmanCreateEmptyTable(uint16_t *nodes,uint16_t value)
 {
-	nodes[0]=value|0x8000U;
+	nodes[0]=~value;
 }
 
 void archivefs_HuffmanReset(uint16_t *nodes)

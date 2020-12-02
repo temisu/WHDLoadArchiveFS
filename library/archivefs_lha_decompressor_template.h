@@ -22,7 +22,7 @@
 			while (pos<targetLength && spaceLength--)
 			{
 				history[historyPos++]=0x20U;
-				historyPos&=mask;
+				historyPos&=8191U;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 				dest[bufferPos++]=0x20U;
 #endif
@@ -34,9 +34,9 @@
 		{
 			uint8_t ch;
 
-			ch=history[(historyPos-distance)&mask];
+			ch=history[(historyPos-distance)&8191U];
 			history[historyPos++]=ch;
-			historyPos&=mask;
+			historyPos&=8191U;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 			dest[bufferPos++]=ch;
 #endif
@@ -57,13 +57,13 @@
 		if (symbol<256U)
 		{
 			history[historyPos++]=symbol;
-			historyPos&=mask;
+			historyPos&=8191U;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 			dest[bufferPos++]=symbol;
 #endif
 			pos++;
 		} else {
-			archivefs_lhaDecodeDistance(distance,state,mask);
+			archivefs_lhaDecodeDistance(distance,state);
 
 			symbol-=253U;
 			if (pos<distance)
@@ -75,7 +75,7 @@
 				while (pos<targetLength && spaceLength--)
 				{
 					history[historyPos++]=0x20U;
-					historyPos&=mask;
+					historyPos&=8191U;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 					dest[bufferPos++]=0x20U;
 #endif
@@ -87,9 +87,9 @@
 			{
 				uint8_t ch;
 
-				ch=history[(historyPos-distance)&mask];
+				ch=history[(historyPos-distance)&8191U];
 				history[historyPos++]=ch;
-				historyPos&=mask;
+				historyPos&=8191U;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 				dest[bufferPos++]=ch;
 #endif

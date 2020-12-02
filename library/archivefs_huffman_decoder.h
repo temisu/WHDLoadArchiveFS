@@ -10,12 +10,11 @@
 		(symbol)=(nodes)[0]; \
 		while ((int16_t)symbol>=0) \
 		{ \
-			bitReader; \
-			if (ret<0) return ret; \
-			(symbol)=(nodes)[(symbol)+ret]; \
+			bitReader(symbol); \
+			(symbol)=*(uint16_t*)((uint8_t*)(nodes)+symbol); \
 		} \
-		(symbol)&=0x7fffU; \
-	} while(0)
+		(symbol)=~(symbol); \
+	} while (0)
 
 uint16_t archivefs_HuffmanInsert(uint16_t *nodes,uint16_t nodeCount,uint16_t length,uint32_t code,uint16_t value);
 
