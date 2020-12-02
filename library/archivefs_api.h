@@ -25,6 +25,9 @@ typedef short int16_t;
 #ifndef uint8_t
 typedef unsigned char uint8_t;
 #endif
+#ifndef int8_t
+typedef signed char int8_t;
+#endif
 
 
 /*

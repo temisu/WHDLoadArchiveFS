@@ -2,7 +2,7 @@
 
 /* Skip and DecodePartial are almost the same, still different enough */
 
-	uint32_t pos=state->rawPos,spaceLength,blockLength=state->blockRemaining;
+	uint32_t pos=state->rawPos,blockLength=state->blockRemaining;
 	uint16_t symbol=state->remainingRepeat,distance=state->distance;
 #ifndef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 	uint32_t bufferPos=0;
@@ -10,12 +10,13 @@
 	uint16_t historyPos=state->historyPos;
 	uint8_t *history=state->history;
 	int32_t ret;
-	uint8_t ch;
 
 	if (symbol)
 	{
 		if (pos<distance)
 		{
+			uint32_t spaceLength;
+
 			spaceLength=distance-pos;
 			if (spaceLength>symbol) spaceLength=symbol;
 			while (pos<targetLength && spaceLength--)
@@ -31,6 +32,8 @@
 		}
 		while (pos<targetLength && symbol--)
 		{
+			uint8_t ch;
+
 			ch=history[(historyPos-distance)&mask];
 			history[historyPos++]=ch;
 			historyPos&=mask;
@@ -60,12 +63,13 @@
 #endif
 			pos++;
 		} else {
-			distance=ret=archivefs_lhaDecodeDistance(state,mask);
-			if (ret<0) return ret;
+			archivefs_lhaDecodeDistance(distance,state,mask);
 
 			symbol-=253U;
 			if (pos<distance)
 			{
+				uint32_t spaceLength;
+
 				spaceLength=distance-pos;
 				if (spaceLength>symbol) spaceLength=symbol;
 				while (pos<targetLength && spaceLength--)
@@ -81,6 +85,8 @@
 			}
 			while (pos<targetLength && symbol--)
 			{
+				uint8_t ch;
+
 				ch=history[(historyPos-distance)&mask];
 				history[historyPos++]=ch;
 				historyPos&=mask;
@@ -91,6 +97,7 @@
 			}
 		}
 	}
+	state->filePos=(state->archive->blockIndex<<state->archive->blockShift)+state->archive->blockPos-state->fileOffset;
 	state->rawPos=pos;
 	state->blockRemaining=blockLength;
 	state->remainingRepeat=symbol;

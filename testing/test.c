@@ -1,13 +1,13 @@
 /* Copyright (C) Teemu Suutari */
 
-#include "archivefs_api.h"
-#include "archivefs_integration.h"
-#include "testing/CRC32.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+
+#include "archivefs_api.h"
+#include "archivefs_integration.h"
+#include "testing/CRC32.h"
 
 struct FIB
 {
