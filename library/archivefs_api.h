@@ -74,6 +74,7 @@ typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 */
 typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
 
+typedef void (*archivefs_progressIndicator)(uint32_t current,uint32_t max);
 
 /* API */
 
@@ -174,5 +175,7 @@ int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint32_t le
         * Pointer to a string for the error description
 */
 const char *archivefs_getErrorString(int error_code);
+
+int archivefs_setProgressCallback(void *archive,archivefs_progressIndicator progressFunc);
 
 #endif

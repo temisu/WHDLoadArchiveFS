@@ -33,6 +33,7 @@
 int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *archive);
 int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state *archive);
 int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive);
+
 uint32_t archivefs_common_unixTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince);
 uint32_t archivefs_common_dosTimeToAmiga(uint32_t timestamp,uint32_t *minutesSince,uint32_t *ticksSince);
 void archivefs_common_insertFileEntry(struct archivefs_state *archive,struct archivefs_cached_file_entry *entry);

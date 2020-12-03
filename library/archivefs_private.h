@@ -70,6 +70,12 @@ struct archivefs_state
 	int32_t (*fileRead)(void *dest,struct archivefs_file_state *,uint32_t,uint32_t);
 	int (*uninitialize)(struct archivefs_state*);
 
+	/* Progress indicator */
+	archivefs_progressIndicator		progressFunc;
+	uint32_t				currentProgress;
+	uint32_t				totalBlocks;
+	int					progressEnabled;
+
 	union
 	{
 		struct archivefs_lha_state	lha;

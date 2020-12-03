@@ -4,7 +4,7 @@
 #include "archivefs_integration.h"
 #include "archivefs_common.h"
 
-static int32_t archivefs_fileReadRaw(struct archivefs_combined_state *combined,void *dest,struct archivefs_cached_file_entry *entry,uint32_t length,uint32_t offset)
+static int32_t archivefs_fileReadRaw(struct archivefs_combined_state *combined,void *dest,struct archivefs_cached_file_entry *entry,uint32_t length,uint32_t offset,int progressEnabled)
 {
 	int ret;
 	struct archivefs_state *archive=&combined->archive;
@@ -15,7 +15,9 @@ static int32_t archivefs_fileReadRaw(struct archivefs_combined_state *combined,v
 		if (ret<0) return ret;
 		combined->currentFile=entry;
 	}
+	combined->archive.progressEnabled=progressEnabled;
 	return archive->fileRead(dest,&combined->fileState,length,offset);
+	combined->archive.progressEnabled=0;
 }
 
 /*
@@ -109,6 +111,11 @@ int archivefs_initialize(void **_archive,const char *filename)
 	combinedState->archive.firstEntry=0;
 	combinedState->archive.lastEntry=0;
 
+	combinedState->archive.progressFunc=0;
+	combinedState->archive.currentProgress=0;
+	combinedState->archive.totalBlocks=0;
+	combinedState->archive.progressEnabled=0;
+
 	combinedState->archive.uninitialize=0;
 
 	combinedState->fileState.archive=&combinedState->archive;
@@ -124,6 +131,7 @@ int archivefs_initialize(void **_archive,const char *filename)
 		if (hdr[0]=='-' && hdr[1]=='l' && hdr[2]=='h') ret=archivefs_lha_initialize(&combinedState->archive);
 			else ret=archivefs_zip_initialize(&combinedState->archive);
 	}
+	if (combinedState->archive.totalBlocks<1U) combinedState->archive.totalBlocks=1U;
 
 	if (ret) archivefs_uninitialize(combinedState);
 	*_archive=ret?0:combinedState;
@@ -186,7 +194,7 @@ int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 			if (!ptr) break;
 			if (((int)ptr)!=-1)
 			{
-				ret=archivefs_fileReadRaw(combined,ptr,tmp,tmp->length,0);
+				ret=archivefs_fileReadRaw(combined,ptr,tmp,tmp->length,0,1);
 				if (ret<0) return ret;
 			}
 		}
@@ -245,7 +253,7 @@ int32_t archivefs_fileRead(void *_archive,void *dest,const char *name,uint32_t l
 	} else {
 		entry=combined->currentFile;
 	}
-	return archivefs_fileReadRaw(combined,dest,entry,length,offset);
+	return archivefs_fileReadRaw(combined,dest,entry,length,offset,0);
 }
 
 static const char *archivefs_errors[]={
@@ -266,4 +274,13 @@ const char *archivefs_getErrorString(int error_code)
 		else error_code=0;
 	if (error_code>9) error_code=9;
 	return archivefs_errors[error_code];
+}
+
+int archivefs_setProgressCallback(void *_archive,archivefs_progressIndicator progressFunc)
+{
+	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_archive;
+        struct archivefs_state *archive=&combined->archive;
+
+        archive->progressFunc=progressFunc;
+        return 0;
 }
