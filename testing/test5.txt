@@ -2,7 +2,7 @@ DESCRIPTION:
 Test full uncompressed zip examine
 --END
 PARAMS:
-examine testing/test_files/test.zip
+examine testing/test_files/test_uncompressed.zip
 --END
 OUTPUT:
 ----------------------------------------------------------------------------

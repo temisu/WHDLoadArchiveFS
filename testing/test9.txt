@@ -2,7 +2,7 @@ DESCRIPTION:
 Test partial uncompressed zip filecache
 --END
 PARAMS:
-filecache testing/test_files/test.zip 3 3
+filecache testing/test_files/test_uncompressed.zip 3 3
 --END
 OUTPUT:
 ----------------------------------------------------------------------------

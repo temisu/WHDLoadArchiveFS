@@ -2,7 +2,7 @@ DESCRIPTION:
 Test lha readFile wrong type
 --END
 PARAMS:
-read testing/test_files/test_lh0.lha TemplosSagradosHD/empty1
+read testing/test_files/test_l0.lha TemplosSagradosHD/empty1
 --END
 OUTPUT:
 ----------------------------------------------------------------------------

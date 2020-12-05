@@ -30,10 +30,12 @@ static int32_t archivefs_common_readBlockRaw(void *dest,uint32_t blockIndex,stru
 	return archivefs_common_readPartial(dest,length,offset,archive);
 }
 
-static uint32_t archivefs_common_getTotalBlocks(uint32_t offset,uint32_t length,struct archivefs_state *archive)
+uint32_t archivefs_common_getTotalBlocks(uint32_t offset,uint32_t length,struct archivefs_state *archive)
 {
 	uint32_t blockMask=(1U<<archive->blockShift)-1U;
 	uint32_t count=0;
+
+	if (!length) return 0;
 
 	offset&=blockMask;
 	if (offset)
@@ -47,14 +49,14 @@ static uint32_t archivefs_common_getTotalBlocks(uint32_t offset,uint32_t length,
 	return count;
 }
 
-static void handleProgress(struct archivefs_state *archive)
+void archivefs_common_handleProgress(struct archivefs_state *archive)
 {
 	if (archive->progressEnabled)
 	{
 		uint32_t pos=++archive->currentProgress;
 		if (archive->progressFunc)
 		{
-			if (pos>=archive->totalBlocks) pos=archive->totalBlocks;
+			if (pos>archive->totalBlocks) pos=archive->totalBlocks;
 			archive->progressFunc(pos,archive->totalBlocks);
 		}
 	}
@@ -64,7 +66,7 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 {
 	int ret;
 
-	handleProgress(archive);
+	archivefs_common_handleProgress(archive);
 	if (blockIndex==archive->blockIndex) return 0;
 	ret=archivefs_common_readBlockRaw(archive->blockData,blockIndex,archive);
 	if (ret>=0)
@@ -139,14 +141,13 @@ int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct arch
 	blockShift=archive->blockShift;
 	blockSize=1U<<blockShift;
 	startBlock=offset>>blockShift;
-	maxBlock=(offset+length+blockSize-1)>>blockShift;
+	maxBlock=(offset+length+blockSize-1U)>>blockShift;
 	currentBufferBlock=archive->blockIndex;
 	/* We could make buffering logic better here for the choice of the buffered block... */
 	newBufferBlock=maxBlock-1;
 
 	if (startBlock<=currentBufferBlock && currentBufferBlock<maxBlock)
 	{
-		handleProgress(archive);
 		if (currentBufferBlock==startBlock) destOffset=0;
 			else destOffset=((blockSize-offset)&(blockSize-1U))+((currentBufferBlock-startBlock-1U)<<blockShift);
 		destCopied=ret=archivefs_common_copyBlock((uint8_t*)dest+destOffset,startBlock,maxBlock,currentBufferBlock,length,offset,archive);
@@ -157,6 +158,7 @@ int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct arch
 	{
 		if (i==currentBufferBlock)
 		{
+			archivefs_common_handleProgress(archive);
 			dest=(uint8_t*)dest+destCopied;
 			continue;
 		}
@@ -167,7 +169,7 @@ int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct arch
 			if (ret<0) return ret;
 			dest=(uint8_t*)dest+ret;
 		} else {
-			handleProgress(archive);
+			archivefs_common_handleProgress(archive);
 			if (i==startBlock)
 			{
 				/* possible partial read */

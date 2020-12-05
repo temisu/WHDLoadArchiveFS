@@ -2,7 +2,7 @@ DESCRIPTION:
 Test full uncompressed lha level2 examine
 --END
 PARAMS:
-examine testing/test_files/test_lh2.lha
+examine testing/test_files/test_l2.lha
 --END
 OUTPUT:
 ----------------------------------------------------------------------------

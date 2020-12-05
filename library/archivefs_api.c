@@ -16,8 +16,9 @@ static int32_t archivefs_fileReadRaw(struct archivefs_combined_state *combined,v
 		combined->currentFile=entry;
 	}
 	combined->archive.progressEnabled=progressEnabled;
-	return archive->fileRead(dest,&combined->fileState,length,offset);
+	ret=archive->fileRead(dest,&combined->fileState,length,offset);
 	combined->archive.progressEnabled=0;
+	return ret;
 }
 
 /*
@@ -185,6 +186,7 @@ int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_archive;
 	struct archivefs_state *archive=&combined->archive;
 
+	archive->currentProgress=0;
 	tmp=archive->firstEntry;
 	while (tmp)
 	{

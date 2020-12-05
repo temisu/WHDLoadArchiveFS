@@ -62,16 +62,17 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 		lfhLength=HDR_LFH_SIZE+GET_LE16(hdr+HDR_LFH_OFFSET_NAMELENGTH)+GET_LE16(hdr+HDR_LFH_OFFSET_EXTRALENGTH);
 		if (entry->dataOffset+lfhLength+entry->dataLength>=archive->fileLength)
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		/*
+		   now do fixup: since the offset were wrong earlier there is probably -1/+1 error on the block count
+		   this is why we do +1 for to block count when adding the entry
+		*/
+		file_state->state.zip.progressExtra=archivefs_common_getTotalBlocks(entry->dataOffset,entry->dataLength,archive)+1U-
+			archivefs_common_getTotalBlocks(entry->dataOffset+lfhLength,entry->dataLength,archive);
 		entry->dataOffset+=lfhLength;
 		entry->dataType&=~0x100U;
 	}
 	file_state->state.zip.entry=entry;
-	if (entry->dataType)
-	{
-		/* again a bit hackish. Have the decompression state as part of the main state... */
-		file_state->state.zip.decompressState=file_state->archive->state.zip.decompressState;
-		archivefs_zipDecompressInitialize(file_state->state.zip.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length);
-	}
+	file_state->state.zip.decompressState=0;
 	return 0;
 }
 
@@ -81,11 +82,20 @@ static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *fi
 	struct archivefs_cached_file_entry *entry;
 	int ret;
 
+	while (file_state->state.zip.progressExtra-->0)
+		archivefs_common_handleProgress(file_state->archive);
+
 	entry=file_state->state.zip.entry;
 	if (length+offset>entry->length)
 		return ARCHIVEFS_ERROR_INVALID_READ;
 	if (entry->dataType)
 	{
+		if (!file_state->state.zip.decompressState)
+		{
+			/* again a bit hackish. Have the decompression state as part of the main state... */
+			file_state->state.zip.decompressState=file_state->archive->state.zip.decompressState;
+			archivefs_zipDecompressInitialize(file_state->state.zip.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length);
+		}
 		return archivefs_zipDecompress(file_state->state.zip.decompressState,dest,length,offset);
 	} else {
 		if ((ret=archivefs_common_read(dest,length,entry->dataOffset+offset,file_state->archive))<0) return ret;
@@ -274,6 +284,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 		printf("filenote '%s'\n\n",entry->filenote);
 #endif
 		archivefs_common_insertFileEntry(archive,entry);
+		if (!isDir && packedLength) archive->totalBlocks++; /* For local file entry */
 
 		cdOffset+=cfhLength;
 		cdLength-=cfhLength;

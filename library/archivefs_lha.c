@@ -366,13 +366,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 static int archivefs_lha_fileOpen(struct archivefs_file_state *file_state,struct archivefs_cached_file_entry *entry)
 {
 	file_state->state.lha.entry=entry;
-
-	if (entry->dataType)
-	{
-		/* again a bit hackish. Have the decompression state as part of the main state... */
-		file_state->state.lha.decompressState=file_state->archive->state.lha.decompressState;
-		archivefs_lhaDecompressInitialize(file_state->state.lha.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length,entry->dataType);
-	}
+	file_state->state.lha.decompressState=0;
 	return 0;
 }
 
@@ -387,6 +381,12 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 		return ARCHIVEFS_ERROR_INVALID_READ;
 	if (entry->dataType)
 	{
+		if (!file_state->state.lha.decompressState)
+		{
+			/* again a bit hackish. Have the decompression state as part of the main state... */
+			file_state->state.lha.decompressState=file_state->archive->state.lha.decompressState;
+			archivefs_lhaDecompressInitialize(file_state->state.lha.decompressState,file_state->archive,entry->dataOffset,entry->dataLength,entry->length,entry->dataType);
+		}
 		return archivefs_lhaDecompress(file_state->state.lha.decompressState,dest,length,offset);
 	} else {
 		if ((ret=archivefs_common_read(dest,length,entry->dataOffset+offset,file_state->archive))<0) return ret;

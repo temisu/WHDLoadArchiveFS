@@ -13,8 +13,9 @@ struct archivefs_zip_state
 
 struct archivefs_zip_file_state
 {
+	int32_t						progressExtra;
 	struct archivefs_zipDecompressState		*decompressState;
-	struct archivefs_cached_file_entry	*entry;
+	struct archivefs_cached_file_entry		*entry;
 };
 
 struct archivefs_state;

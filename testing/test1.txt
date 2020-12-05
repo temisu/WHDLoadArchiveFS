@@ -2,7 +2,7 @@ DESCRIPTION:
 Test full uncompressed zip filecache
 --END
 PARAMS:
-filecache testing/test_files/test.zip
+filecache testing/test_files/test_uncompressed.zip
 --END
 OUTPUT:
 ----------------------------------------------------------------------------

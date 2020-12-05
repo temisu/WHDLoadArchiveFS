@@ -2,7 +2,7 @@ DESCRIPTION:
 Test full uncompressed lha level0 filecache
 --END
 PARAMS:
-filecache testing/test_files/test_lh0.lha
+filecache testing/test_files/test_l0.lha
 --END
 OUTPUT:
 ----------------------------------------------------------------------------
