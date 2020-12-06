@@ -1,0 +1,17 @@
+DESCRIPTION:
+Test lha lh5-compressed partial readFile
+--END
+PARAMS:
+read testing/test_files/test_lh5.lha TemplosSagradosHD/Manual 0 8192 512 512 700 300 0 15296 800 10000 512 512
+--END
+OUTPUT:
+----------------------------------------------------------------------------
+Read:
+CRC for 'TemplosSagradosHD/Manual' @ (0:8192): 0x365593b2
+CRC for 'TemplosSagradosHD/Manual' @ (512:512): 0x575ba260
+CRC for 'TemplosSagradosHD/Manual' @ (700:300): 0x2fd2887f
+CRC for 'TemplosSagradosHD/Manual' @ (0:15296): 0x79e1fa64
+CRC for 'TemplosSagradosHD/Manual' @ (800:10000): 0x46d34280
+CRC for 'TemplosSagradosHD/Manual' @ (512:512): 0x575ba260
+----------------------------------------------------------------------------
+--END

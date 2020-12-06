@@ -184,23 +184,51 @@ int main(int argc,char **argv)
 		}
 		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"read")) {
+		const char *name;
+
 		if (argc<4) return 0;
+		name=argv[3];
+		argc-=4;
+		argv+=4;
+		length=archivefs_getFileSize(archive,name);
 		printf("----------------------------------------------------------------------------\n");
 		printf("Read:\n");
-		length=archivefs_getFileSize(archive,argv[3]);
 		if (length<0)
 		{
 			printf("archivefs_getFileSize() failed with code %d (%s)\n",length,archivefs_getErrorString(length));
 			return 0;
 		}
 		verify=archivefs_malloc(length);
-		ret=archivefs_fileRead(archive,verify,argv[3],length,0);
-		if (ret!=length)
+		if (argc<2)
 		{
-			printf("archivefs_fileRead failed with code %d %s\n",ret,archivefs_getErrorString(ret));
-			return 0;
+			ret=archivefs_fileRead(archive,verify,name,length,0);
+			if (ret!=length)
+			{
+				printf("archivefs_fileRead failed with code %d %s\n",ret,archivefs_getErrorString(ret));
+				return 0;
+			}
+			printf("CRC for '%s': 0x%08x\n",name,CRC32(verify,length));
+		} else {
+			while (argc>=2)
+			{
+				uint32_t offset,partialLength;
+
+				offset=atoi(argv[0]);
+				partialLength=atoi(argv[1]);
+
+				ret=archivefs_fileRead(archive,verify,name,partialLength,offset);
+				if (ret!=partialLength)
+				{
+					printf("archivefs_fileRead failed with code %d %s\n",ret,archivefs_getErrorString(ret));
+					return 0;
+				}
+				printf("CRC for '%s' @ (%u:%u): 0x%08x\n",name,offset,partialLength,CRC32(verify,partialLength));
+
+				argc-=2;
+				argv+=2;
+			}
 		}
-		printf("CRC for '%s': 0x%08x\n",argv[3],CRC32(verify,length));
+
 		archivefs_free(verify);
 		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"progress")) {
