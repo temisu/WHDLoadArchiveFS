@@ -80,15 +80,11 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		break;
 
 		case '0':
-		dataType=0;
-		break;
-
+		case '1':
 		case '4':
-		dataType=4;
-		break;
-
 		case '5':
-		dataType=5;
+		case '6':
+		dataType=hdr[HDR_L0_OFFSET_METHOD+3]-'0';
 		break;
 
 		default:
@@ -404,7 +400,7 @@ static int archivefs_lha_uninitialize(struct archivefs_state *archive)
 int archivefs_lha_initialize(struct archivefs_state *archive)
 {
 	struct archivefs_cached_file_entry *entry;
-	int usesCompression=0;
+	int usesCompression=0,hasLH1=0,hasLH45=0,hasLH6=0;
 	int32_t offset=0;
 
 	archive->state.lha.decompressState=0;
@@ -421,13 +417,34 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 			if (entry) archivefs_free(entry);
 			return offset;
 		}
-		if (entry->dataType) usesCompression=1;
+		if (entry->dataType)
+		{
+			switch (entry->dataType)
+			{
+				case 1:
+				hasLH1=1;
+				break;
+
+				case 4:
+				case 5:
+				hasLH45=1;
+				break;
+
+				case 6:
+				hasLH6=1;
+				break;
+
+				default:
+				break;
+			}
+			usesCompression=1;
+		}
 		archivefs_common_insertFileEntry(archive,entry);
 	}
 
 	if (usesCompression)
 	{
-		archive->state.lha.decompressState=archivefs_malloc(sizeof(struct archivefs_lhaDecompressState));
+		archive->state.lha.decompressState=archivefs_lhaAllocateDecompressState(hasLH1,hasLH45,hasLH6);
 		if (!archive->state.lha.decompressState)
 			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
 	}

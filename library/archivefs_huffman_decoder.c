@@ -38,7 +38,7 @@ int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLength
 	for (i=0;i<bitTableLength;i++)
 	{
 		uint8_t length=bitLengths[i];
-		if (length>32)
+		if (length>32U)
 			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 		if (length)
 		{

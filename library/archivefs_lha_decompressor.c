@@ -2,24 +2,30 @@
 
 #include "archivefs_lha_decompressor.h"
 #include "archivefs_huffman_decoder.h"
+#include "archivefs_integration.h"
 
 /* decompresses LH4 and LH5 files */
 
 #define archivefs_lhaReadBits(value,bits) \
 	do { \
 		uint8_t _bits=(bits); \
-		if ((state)->bitsLeft<_bits) \
+		while (_bits) \
 		{ \
-			struct archivefs_state *archive; \
-			(value)=((value)<<(state)->bitsLeft)|((state)->accumulator>>(16U-(state)->bitsLeft)); \
-			archive=(state)->archive; \
-			archivefs_common_readNextWord((state)->accumulator,archive); \
-			_bits-=(state)->bitsLeft; \
-			(state)->bitsLeft=16U; \
+			if ((state)->bitsLeft<_bits) \
+			{ \
+				struct archivefs_state *archive; \
+				(value)=((value)<<(state)->bitsLeft)|((state)->accumulator>>(16U-(state)->bitsLeft)); \
+				archive=(state)->archive; \
+				archivefs_common_readNextWord((state)->accumulator,archive); \
+				_bits-=(state)->bitsLeft; \
+				(state)->bitsLeft=16U; \
+			} else { \
+				(value)=((value)<<_bits)|((state)->accumulator>>(16U-_bits)); \
+				(state)->accumulator<<=_bits; \
+				(state)->bitsLeft-=_bits; \
+				_bits=0; \
+			} \
 		} \
-		(value)=((value)<<_bits)|((state)->accumulator>>(16U-_bits)); \
-		(state)->accumulator<<=_bits; \
-		(state)->bitsLeft-=_bits; \
 	} while (0)
 
 #define archivefs_lhaReadBit(incr) \
@@ -104,7 +110,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 				archivefs_lhaReadBit(tmp);
 				if (tmp) value++;
 			} while (tmp);
-			if (value>31U)
+			if (value>32U)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 		}
 		bitLengths[i++]=value;
@@ -180,7 +186,7 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 			symbols[i++]=value;
 	}
 	if ((ret=archivefs_HuffmanCreateOrderlyTable(state->symbolTree,symbols,tableLength))<0) return ret;
-	if ((ret=archivefs_lhaCreateSimpleTable(state,state->distanceTree,14U,4U,0))<0) return ret;
+	if ((ret=archivefs_lhaCreateSimpleTable(state,state->distanceTree,state->method==6U?16U:14U,state->method==6U?5U:4U,0))<0) return ret;
 	return blockRemaining;
 }
 
@@ -242,13 +248,13 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 	return 0;
 }
 
-static int archivefs_lhaDecompressSkip(struct archivefs_lhaDecompressState *state,uint32_t targetLength)
+static int archivefs_lhaDecompressSkip(struct archivefs_lhaDecompressState *state,uint32_t targetLength,uint16_t mask)
 {
 #define ARCHIVEFS_LHA_DECOMPRESS_SKIP 1
 #include "archivefs_lha_decompressor_template.h"
 }
 
-static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t targetLength)
+static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t targetLength,uint16_t mask)
 {
 #undef ARCHIVEFS_LHA_DECOMPRESS_SKIP
 #include "archivefs_lha_decompressor_template.h"
@@ -256,6 +262,7 @@ static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *s
 
 int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset)
 {
+	uint16_t mask=state->method==6U?ARCHIVEFS_LHA_LH6_HISTORY_SIZE-1:(ARCHIVEFS_LHA_LH5_HISTORY_SIZE-1);
 	int ret;
 
 	if (offset<state->rawPos)
@@ -272,7 +279,7 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 	}
 	if (offset!=state->rawPos)
 	{
-		if ((ret=archivefs_lhaDecompressSkip(state,offset))<0)
+		if ((ret=archivefs_lhaDecompressSkip(state,offset,mask))<0)
 		{
 			archivefs_lhaDecompressReset(state);
 			return ret;
@@ -286,11 +293,22 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 			return ret;
 		}
 	} else {
-		if ((ret=archivefs_lhaDecompressPartial(state,dest,offset+length))<0)
+		if ((ret=archivefs_lhaDecompressPartial(state,dest,offset+length,mask))<0)
 		{
 			archivefs_lhaDecompressReset(state);
 			return ret;
 		}
 	}
 	return length;
+}
+
+struct archivefs_lhaDecompressState *archivefs_lhaAllocateDecompressState(int hasLH1,int hasLH45,int hasLH6)
+{
+	uint32_t length;
+
+	/* no LH1 support as of yet */
+	length=sizeof(struct archivefs_lhaDecompressState);
+	if (hasLH6)
+		length+=ARCHIVEFS_LHA_LH6_HISTORY_SIZE-ARCHIVEFS_LHA_LH5_HISTORY_SIZE;
+	return archivefs_malloc(sizeof(struct archivefs_lhaDecompressState));
 }
