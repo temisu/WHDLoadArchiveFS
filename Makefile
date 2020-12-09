@@ -72,3 +72,6 @@ run_tests: $(PROG)
 	@./testing/run_test.sh testing/test14.txt
 	@./testing/run_test.sh testing/test15.txt
 	@./testing/run_test.sh testing/test16.txt
+	@./testing/run_test.sh testing/test17.txt
+	@./testing/run_test.sh testing/test18.txt
+	@./testing/run_test.sh testing/test19.txt

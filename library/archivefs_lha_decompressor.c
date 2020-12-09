@@ -310,5 +310,5 @@ struct archivefs_lhaDecompressState *archivefs_lhaAllocateDecompressState(int ha
 	length=sizeof(struct archivefs_lhaDecompressState);
 	if (hasLH6)
 		length+=ARCHIVEFS_LHA_LH6_HISTORY_SIZE-ARCHIVEFS_LHA_LH5_HISTORY_SIZE;
-	return archivefs_malloc(sizeof(struct archivefs_lhaDecompressState));
+	return archivefs_malloc(length);
 }
