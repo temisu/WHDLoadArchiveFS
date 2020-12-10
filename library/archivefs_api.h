@@ -66,13 +66,13 @@ typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 /*
    archivefs_registerEntry will be calles by archivefs_dirCache for each entry in the archive
    Parameters:
-	* path - path of the file
+	* fullpath - path and filename of the file
 	* fib - pointer to the 232-byte fib structure for the entry
    Returns:
 	* 0 - stop processing further entries
 	* -1 (or any nonzero value) - continue processing
 */
-typedef int (*archivefs_registerEntry)(const char *path,const void *fib);
+typedef int (*archivefs_registerEntry)(const char *fullpath,const void *fib);
 
 typedef void (*archivefs_progressIndicator)(uint32_t current,uint32_t max);
 

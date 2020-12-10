@@ -218,7 +218,7 @@ int archivefs_dirCache(void *_archive,archivefs_registerEntry registerFunc)
 	while (tmp)
 	{
 		archivefs_createFIB(&fib,tmp);
-		ret=registerFunc(tmp->path,&fib);
+		ret=registerFunc(tmp->pathAndName,&fib);
 		if (!ret) break;
 		tmp=tmp->next;
 	}
