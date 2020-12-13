@@ -39,8 +39,8 @@ struct archivefs_lhaDecompressState
 
 	uint16_t	historyPos;
 
-	/* round upwards intentionally. Nodes are booked with pairs so rounding down would be misguided here */
-	uint16_t	symbolTree[512*2];
+	/* worst case */
+	uint16_t	symbolTree[511*2+1];
 	uint16_t	distanceTree[16*2+1];
 
 	uint8_t		history[ARCHIVEFS_LHA_LH5_HISTORY_SIZE];

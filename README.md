@@ -15,7 +15,3 @@ zip -r0N <archive>.zip <directory>
 ```
 
 Replace the `<archive>` and `<directory>` with the target archive name and source directory name respectively
-
-For programming API see archivefs_api.h
-
-TODO: whdvfs.i license?
