@@ -48,6 +48,7 @@ typedef signed char int8_t;
 #define ARCHIVEFS_ERROR_INVALID_FILE_TYPE (-6)
 #define ARCHIVEFS_ERROR_DECOMPRESSION_ERROR (-7)
 #define ARCHIVEFS_ERROR_INVALID_READ (-8)
+#define ARCHIVEFS_ERROR_OPERATION_CANCELED (-9)
 
 /* callback functions for the API */
 
@@ -57,7 +58,7 @@ typedef signed char int8_t;
 	* name - name of the file, including path
 	* length - length of the file
    Returns:
-	* null - when no more files are wanted. i.e. terminate the archivefs_fileCache
+	* null - when no more files are wanted. i.e. terminate the archivefs_fileCache. fileCache will return with ARCHIVEFS_ERROR_OPERATION_CANCELED error
 	* -1 casted as void* - skip this file
 	* any other pointer - allocated buffer of at least file length where the file is requested to read into
 */
@@ -69,7 +70,7 @@ typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 	* fullpath - path and filename of the file
 	* fib - pointer to the 232-byte fib structure for the entry
    Returns:
-	* 0 - stop processing further entries
+	* 0 - stop processing further entries. dirCache will return with ARCHIVEFS_ERROR_OPERATION_CANCELED error
 	* -1 (or any nonzero value) - continue processing
 */
 typedef int (*archivefs_registerEntry)(const char *fullpath,const void *fib);
@@ -122,7 +123,7 @@ int32_t archivefs_getFileSize(void *archive,const char *name);
    Read (chosen) files into fileCache.
    Does not allocate memory
    archivefs_fileCache will call archivefs_allocFile for each file in the archive and if the function returns with a valid pointer
-   file contents are read to it. archivefs_fileCache is cant be called in parallel to archivefs_fileRead in scope of same archive
+   file contents are read to it.
    Parameters:
 	* archive - pointer to archive
 	* fileFunc - function to call for each file
@@ -130,7 +131,9 @@ int32_t archivefs_getFileSize(void *archive,const char *name);
 	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
    Notable error codes:
 	* Pass through errors from archivefs_integration
+	* ARCHIVEFS_ERROR_INVALID_FORMAT - file could not be parsed
 	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* ARCHIVEFS_ERROR_OPERATION_CANCELED - callback returned stop condition
 */
 int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
 
@@ -143,7 +146,7 @@ int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
    Returns:
 	* error code or 0 if success.
    Notable error codes:
-	* none
+	* ARCHIVEFS_ERROR_OPERATION_CANCELED - callback returned stop condition
 */
 int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
 

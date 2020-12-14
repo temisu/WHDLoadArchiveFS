@@ -19,15 +19,17 @@ struct archivefs_zipDecompressState
 	uint8_t		accumulator;
 	uint8_t		bitsLeft;
 
+	uint8_t		mode;
+
 	uint32_t	blockRemaining;
 	uint16_t	remainingRepeat;
 	uint16_t	distance;
 
 	uint16_t	historyPos;
 
-	/* round upwards intentionally. Nodes are booked with pairs so rounding down would be misguided here */
-	uint16_t	symbolTree[286*2];
-	uint16_t	distanceTree[32*2];
+	/* worst case */
+	uint16_t	symbolTree[288*2+1];
+	uint16_t	distanceTree[32*2+1];
 
 	uint8_t		history[32768];
 };

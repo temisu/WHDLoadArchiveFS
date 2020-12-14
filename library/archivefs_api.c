@@ -193,7 +193,7 @@ int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 		if (tmp->fileType==ARCHIVEFS_TYPE_FILE)
 		{
 			ptr=fileFunc(tmp->pathAndName,tmp->length);
-			if (!ptr) break;
+			if (!ptr) return ARCHIVEFS_ERROR_OPERATION_CANCELED;
 			if (((int)ptr)!=-1)
 			{
 				ret=archivefs_fileReadRaw(combined,ptr,tmp,tmp->length,0,1);
@@ -219,7 +219,7 @@ int archivefs_dirCache(void *_archive,archivefs_registerEntry registerFunc)
 	{
 		archivefs_createFIB(&fib,tmp);
 		ret=registerFunc(tmp->pathAndName,&fib);
-		if (!ret) break;
+		if (!ret) return ARCHIVEFS_ERROR_OPERATION_CANCELED;
 		tmp=tmp->next;
 	}
 	return 0;
@@ -268,13 +268,14 @@ static const char *archivefs_errors[]={
 	"Invalid file type",
 	"Decompression failure",
 	"Invalid read parameters"
+	"Operation canceled",
 	"Unknown error"};
 
 const char *archivefs_getErrorString(int error_code)
 {
 	if (error_code<0) error_code=-error_code;
 		else error_code=0;
-	if (error_code>9) error_code=9;
+	if (error_code>10) error_code=10;
 	return archivefs_errors[error_code];
 }
 

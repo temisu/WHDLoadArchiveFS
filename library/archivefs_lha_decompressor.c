@@ -4,7 +4,7 @@
 #include "archivefs_huffman_decoder.h"
 #include "archivefs_integration.h"
 
-/* decompresses LH4 and LH5 files */
+/* decompresses LH4, LH5 and LH6 files */
 
 #define archivefs_lhaReadBits(value,bits) \
 	do { \
@@ -23,7 +23,7 @@
 				(value)=((value)<<_bits)|((state)->accumulator>>(16U-_bits)); \
 				(state)->accumulator<<=_bits; \
 				(state)->bitsLeft-=_bits; \
-				_bits=0; \
+				break; \
 			} \
 		} \
 	} while (0)
