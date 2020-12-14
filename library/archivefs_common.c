@@ -95,8 +95,22 @@ int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *arc
 	return 0;
 }
 
+int32_t archivefs_common_readNextBytes(uint8_t **dest,uint32_t length,struct archivefs_state *archive)
+{
+	uint32_t max;
+	int32_t ret;
+
+	if (archive->blockPos==archive->blockLength)
+		if ((ret=archivefs_common_readBlockBuffer(archive->blockIndex+1,archive))<0) return ret;
+	max=archive->blockLength-archive->blockPos;
+	if (length>max) length=max;
+	*dest=archive->blockData+archive->blockPos;
+	archive->blockPos+=length;
+	return length;
+}
+
 /* TODO: make it proper, or use library */
-static void archivefs_memcpy(void *dest,const void *src,uint32_t length)
+void archivefs_common_memcpy(void *dest,const void *src,uint32_t length)
 {
 	uint8_t *_dest=dest;
 	const uint8_t *_src=src;
@@ -125,7 +139,7 @@ static int32_t archivefs_common_copyBlock(uint8_t *dest,uint32_t startBlock,uint
 	}
 	if (currentBlockLength>archive->blockLength)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	archivefs_memcpy(dest,archive->blockData+copyOffset,currentBlockLength-copyOffset);
+	archivefs_common_memcpy(dest,archive->blockData+copyOffset,currentBlockLength-copyOffset);
 	return currentBlockLength-copyOffset;
 }
 

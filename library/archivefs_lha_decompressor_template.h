@@ -10,7 +10,9 @@
 	uint16_t historyPos=state->historyPos;
 	uint8_t *history=state->history;
 	int32_t ret;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	if (symbol)
 	{
 		if (pos<distance)

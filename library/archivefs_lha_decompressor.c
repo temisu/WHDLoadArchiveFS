@@ -13,9 +13,7 @@
 		{ \
 			if ((state)->bitsLeft<_bits) \
 			{ \
-				struct archivefs_state *archive; \
 				(value)=((value)<<(state)->bitsLeft)|((state)->accumulator>>(16U-(state)->bitsLeft)); \
-				archive=(state)->archive; \
 				archivefs_common_readNextWord((state)->accumulator,archive); \
 				_bits-=(state)->bitsLeft; \
 				(state)->bitsLeft=16U; \
@@ -32,8 +30,6 @@
 	do { \
 		if (!(state)->bitsLeft) \
 		{ \
-			struct archivefs_state *archive; \
-			archive=state->archive; \
 			archivefs_common_readNextWord(state->accumulator,archive); \
 			state->bitsLeft=15U; \
 		} else (state)->bitsLeft--; \
@@ -85,7 +81,9 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 	uint8_t bitLengths[19];
 	uint8_t i,tableLength;
 	uint8_t value;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	tableLength=0;
 	archivefs_lhaReadBits(tableLength,bits);
 	if (tableLength>length)
@@ -133,10 +131,12 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 	uint16_t i,tableLength,rep;
 	int32_t ret;
 	uint16_t value;
+	struct archivefs_state *archive;
 
 	/* rather inconvenient, but we have no better place than stack to put this table */
 	uint8_t symbols[511];
 
+	archive=state->archive;
 	blockRemaining=0;
 	archivefs_lhaReadBits(blockRemaining,16U);
 	if (!blockRemaining) blockRemaining=0x10000U;
@@ -208,7 +208,9 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 	uint32_t pos,blockLength=0;
 	uint16_t symbol,distance;
 	int32_t ret;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	for (pos=0;pos<length;)
 	{
 		if (!blockLength)

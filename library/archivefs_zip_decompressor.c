@@ -13,9 +13,7 @@
 		{ \
 			if ((state)->bitsLeft<_bits) \
 			{ \
-				struct archivefs_state *archive; \
 				(value)|=((uint16_t)((state)->accumulator&((1U<<(state)->bitsLeft)-1U)))<<bitPos; \
-				archive=(state)->archive; \
 				archivefs_common_readNextByte((state)->accumulator,archive); \
 				bitPos+=(state)->bitsLeft; \
 				_bits-=(state)->bitsLeft; \
@@ -33,8 +31,6 @@
 	do { \
 		if (!(state)->bitsLeft) \
 		{ \
-			struct archivefs_state *archive; \
-			archive=state->archive; \
 			archivefs_common_readNextByte(state->accumulator,archive); \
 			state->bitsLeft=7U; \
 		} else (state)->bitsLeft--; \
@@ -92,7 +88,9 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 	uint16_t i,nodeCount;
 	int ret;
 	uint8_t mode;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	archivefs_zipReadBits(mode,2U);
 	state->mode=mode;
 	switch (mode)
@@ -122,24 +120,17 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 		archivefs_HuffmanReset(state->symbolTree);
 		nodeCount=1;
 		/* Yup! There are 288 codes total even though the last 2 ones are not defined in any spec */
-		for (i=0;i<0x18U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,7U,i,i+0x100U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x30U;i<0xc0U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i-0x30U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0xc0U;i<0xc6U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i+0x58U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0xc6U;i<0xc8U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,0x11dU)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x190U;i<0x200U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,9U,i,i-0x100U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		for (i=0;i<0x18U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,7U,i,i+0x100U);
+		for (i=0x30U;i<0xc0U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i-0x30U);
+		for (i=0xc0U;i<0xc6U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i+0x58U);
+		for (i=0xc6U;i<0xc8U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,0x11dU);
+		for (i=0x190U;i<0x200U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,9U,i,i-0x100U);
 
 		archivefs_HuffmanReset(state->distanceTree);
 		nodeCount=1;
 		/* Ditto: there are 32 codes, even though 30 is used */
-		for (i=0;i<0x1eU;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,i)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x1e;i<0x20U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,29)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		for (i=0;i<0x1eU;i++) nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,i);
+		for (i=0x1e;i<0x20U;i++) nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,29);
 		return 1;
 
 		case 2:
@@ -239,14 +230,15 @@ static const uint8_t archivefs_zipDistanceBits[30]={
 	 7, 7, 8, 8, 9, 9,10,10,
 	11,11,12,12,13,13};
 
-
 static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *state,uint8_t *dest)
 {
 	uint32_t length=state->rawLength;
 	uint32_t pos,blockLength=0;
 	uint16_t count,distance,final=0;
-	int ret;
+	int32_t ret;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	for (pos=0;pos<length;)
 	{
 		if (!blockLength)
@@ -260,13 +252,19 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 		if (!state->mode)
 		{
 			struct archivefs_state *archive;
+			uint32_t bufLength=blockLength;
+			uint8_t *buffer;
 
 			archive=state->archive;
-			while (blockLength && pos<length)
+			if (pos+blockLength>length)
+				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+
+			while (bufLength)
 			{
-				archivefs_common_readNextByte(dest[pos],archive);
-				pos++;
-				blockLength--;
+				if ((ret=archivefs_common_readNextBytes(&buffer,bufLength,archive))<0) return ret;
+				archivefs_common_memcpy(dest+pos,buffer,ret);
+				pos+=ret;
+				bufLength-=ret;
 			}
 		} else {
 			uint16_t symbol;

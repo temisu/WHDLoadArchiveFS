@@ -82,6 +82,7 @@ struct archivefs_state
 		struct archivefs_zip_state	zip;
 	} state;
 
+	/* must be align 2 */
 	uint8_t					blockData[1];
 };
 

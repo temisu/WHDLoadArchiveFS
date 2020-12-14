@@ -1,0 +1,47 @@
+DESCRIPTION:
+Test full compressed zip filecache
+--END
+PARAMS:
+filecache testing/test_files/test_compressed.zip
+--END
+OUTPUT:
+----------------------------------------------------------------------------
+FileCache:
+File 'TemplosSagradosHD/system-configuration', Length 232
+File 'TemplosSagradosHD/src/Los Templos Sagrados.asm', Length 11260
+File 'TemplosSagradosHD/null_file', Length 0
+File 'TemplosSagradosHD/Solution.info', Length 1396
+File 'TemplosSagradosHD/Solution', Length 20498
+File 'TemplosSagradosHD/ReadMe.info', Length 1392
+File 'TemplosSagradosHD/ReadMe', Length 3583
+File 'TemplosSagradosHD/Map Tulum.jpg', Length 339722
+File 'TemplosSagradosHD/Map Coba.jpg', Length 326747
+File 'TemplosSagradosHD/Manual.info', Length 1396
+File 'TemplosSagradosHD/Manual', Length 16296
+File 'TemplosSagradosHD/Los Templos Sagrados.slave', Length 4492
+File 'TemplosSagradosHD/Los Templos Sagrados.newicon', Length 12948
+File 'TemplosSagradosHD/Los Templos Sagrados.inf', Length 1886
+File 'TemplosSagradosHD/Install.info', Length 720
+File 'TemplosSagradosHD/Install', Length 36141
+File 'TemplosSagradosHD/Adventure Planner Tulum.jpg', Length 316655
+File 'TemplosSagradosHD/Adventure Planner Coba.jpg', Length 324123
+CRC for 'TemplosSagradosHD/system-configuration': 0xd5d7cce3
+CRC for 'TemplosSagradosHD/src/Los Templos Sagrados.asm': 0x0aa5316e
+CRC for 'TemplosSagradosHD/null_file': 0x00000000
+CRC for 'TemplosSagradosHD/Solution.info': 0x1009efca
+CRC for 'TemplosSagradosHD/Solution': 0x484a67fb
+CRC for 'TemplosSagradosHD/ReadMe.info': 0x7a824422
+CRC for 'TemplosSagradosHD/ReadMe': 0x4cdcca0d
+CRC for 'TemplosSagradosHD/Map Tulum.jpg': 0xdbd00c30
+CRC for 'TemplosSagradosHD/Map Coba.jpg': 0x845c22e8
+CRC for 'TemplosSagradosHD/Manual.info': 0xa563369f
+CRC for 'TemplosSagradosHD/Manual': 0xfe753eaa
+CRC for 'TemplosSagradosHD/Los Templos Sagrados.slave': 0xe886f380
+CRC for 'TemplosSagradosHD/Los Templos Sagrados.newicon': 0xe6bc61e4
+CRC for 'TemplosSagradosHD/Los Templos Sagrados.inf': 0xfe52a67b
+CRC for 'TemplosSagradosHD/Install.info': 0xd7163e2b
+CRC for 'TemplosSagradosHD/Install': 0xba016bf3
+CRC for 'TemplosSagradosHD/Adventure Planner Tulum.jpg': 0x6b00883d
+CRC for 'TemplosSagradosHD/Adventure Planner Coba.jpg': 0x9af11013
+----------------------------------------------------------------------------
+--END
