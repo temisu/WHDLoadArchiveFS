@@ -11,16 +11,16 @@
 		uint8_t _bits=(bits); \
 		while (_bits) \
 		{ \
-			if ((state)->bitsLeft<_bits) \
+			if (bitsLeft<_bits) \
 			{ \
-				(value)=((value)<<(state)->bitsLeft)|((state)->accumulator>>(16U-(state)->bitsLeft)); \
-				archivefs_common_readNextWord((state)->accumulator,archive); \
-				_bits-=(state)->bitsLeft; \
-				(state)->bitsLeft=16U; \
+				(value)=((value)<<bitsLeft)|(accumulator>>(16U-bitsLeft)); \
+				archivefs_common_readNextWord(accumulator,archive); \
+				_bits-=bitsLeft; \
+				bitsLeft=16U; \
 			} else { \
-				(value)=((value)<<_bits)|((state)->accumulator>>(16U-_bits)); \
-				(state)->accumulator<<=_bits; \
-				(state)->bitsLeft-=_bits; \
+				(value)=((value)<<_bits)|(accumulator>>(16U-_bits)); \
+				accumulator<<=_bits; \
+				bitsLeft-=_bits; \
 				break; \
 			} \
 		} \
@@ -28,16 +28,16 @@
 
 #define archivefs_lhaReadBit(incr) \
 	do { \
-		if (!(state)->bitsLeft) \
+		if (!bitsLeft) \
 		{ \
-			archivefs_common_readNextWord(state->accumulator,archive); \
-			state->bitsLeft=15U; \
-		} else (state)->bitsLeft--; \
-		if ((int16_t)(state->accumulator)<0) incr+=2; \
-		state->accumulator+=state->accumulator; \
+			archivefs_common_readNextWord(accumulator,archive); \
+			bitsLeft=15U; \
+		} else bitsLeft--; \
+		if ((int16_t)(accumulator)<0) incr+=2; \
+		accumulator+=accumulator; \
 	} while (0)
 
-#define archivefs_lhaHuffmanDecode(symbol,state,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_lhaReadBit)
+#define archivefs_lhaHuffmanDecode(symbol,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_lhaReadBit)
 
 void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method)
 {
@@ -81,6 +81,8 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 	uint8_t bitLengths[19];
 	uint8_t i,tableLength;
 	uint8_t value;
+	uint16_t accumulator=state->accumulator;
+	uint8_t bitsLeft=state->bitsLeft;
 	struct archivefs_state *archive;
 
 	archive=state->archive;
@@ -122,6 +124,8 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 				bitLengths[i++]=0;
 		}
 	}
+	state->accumulator=accumulator;
+	state->bitsLeft=bitsLeft;
 	return archivefs_HuffmanCreateOrderlyTable(nodes,bitLengths,tableLength);
 }
 
@@ -131,6 +135,8 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 	uint16_t i,tableLength,rep;
 	int32_t ret;
 	uint16_t value;
+	uint16_t accumulator=state->accumulator;
+	uint8_t bitsLeft=state->bitsLeft;
 	struct archivefs_state *archive;
 
 	/* rather inconvenient, but we have no better place than stack to put this table */
@@ -141,7 +147,11 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 	archivefs_lhaReadBits(blockRemaining,16U);
 	if (!blockRemaining) blockRemaining=0x10000U;
 
+	state->accumulator=accumulator;
+	state->bitsLeft=bitsLeft;
 	if ((ret=archivefs_lhaCreateSimpleTable(state,state->symbolTree,19U,5U,1))<0) return ret;
+	accumulator=state->accumulator;
+	bitsLeft=state->bitsLeft;
 
 	tableLength=0;
 	archivefs_lhaReadBits(tableLength,9U);
@@ -150,11 +160,13 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 		value=0;
 		archivefs_lhaReadBits(value,9U);
 		archivefs_HuffmanCreateEmptyTable(state->symbolTree,value);
+		state->accumulator=accumulator;
+		state->bitsLeft=bitsLeft;
 		return 0;
 	}
 	for (i=0;i<tableLength;)
 	{
-		archivefs_lhaHuffmanDecode(value,state,state->symbolTree);
+		archivefs_lhaHuffmanDecode(value,state->symbolTree);
 		switch (value)
 		{
 			case 0:
@@ -186,6 +198,8 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 			symbols[i++]=value;
 	}
 	if ((ret=archivefs_HuffmanCreateOrderlyTable(state->symbolTree,symbols,tableLength))<0) return ret;
+	state->accumulator=accumulator;
+	state->bitsLeft=bitsLeft;
 	if ((ret=archivefs_lhaCreateSimpleTable(state,state->distanceTree,state->method==6U?16U:14U,state->method==6U?5U:4U,0))<0) return ret;
 	return blockRemaining;
 }
@@ -193,7 +207,7 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 #define archivefs_lhaDecodeDistance(distance,state) \
 	do { \
 		uint16_t distanceBits; \
-		archivefs_lhaHuffmanDecode(distanceBits,state,state->distanceTree); \
+		archivefs_lhaHuffmanDecode(distanceBits,state->distanceTree); \
 		if (distanceBits) \
 		{ \
 			distance=1U; \
@@ -207,6 +221,8 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 	uint32_t length=state->rawLength;
 	uint32_t pos,blockLength=0;
 	uint16_t symbol,distance;
+	uint16_t accumulator=state->accumulator;
+	uint8_t bitsLeft=state->bitsLeft;
 	int32_t ret;
 	struct archivefs_state *archive;
 
@@ -215,12 +231,16 @@ static int archivefs_lhaDecompressFull(struct archivefs_lhaDecompressState *stat
 	{
 		if (!blockLength)
 		{
+			state->accumulator=accumulator;
+			state->bitsLeft=bitsLeft;
 			blockLength=ret=archivefs_lhaInitializeBlock(state);
 			if (ret<0) return ret;
+			accumulator=state->accumulator;
+			bitsLeft=state->bitsLeft;
 		}
 		blockLength--;
 
-		archivefs_lhaHuffmanDecode(symbol,state,state->symbolTree);
+		archivefs_lhaHuffmanDecode(symbol,state->symbolTree);
 		if (symbol<256U)
 		{
 			dest[pos++]=symbol;

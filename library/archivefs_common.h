@@ -35,6 +35,7 @@ uint32_t archivefs_common_getTotalBlocks(uint32_t offset,uint32_t length,struct 
 
 int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *archive);
 int32_t archivefs_common_readNextBytes(uint8_t **dest,uint32_t length,struct archivefs_state *archive);
+int archivefs_common_skipNextBytes(uint32_t length,struct archivefs_state *archive);
 int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state *archive);
 int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive);
 

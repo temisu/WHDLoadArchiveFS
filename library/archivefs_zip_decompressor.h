@@ -20,6 +20,7 @@ struct archivefs_zipDecompressState
 	uint8_t		bitsLeft;
 
 	uint8_t		mode;
+	uint16_t	final;
 
 	uint32_t	blockRemaining;
 	uint16_t	remainingRepeat;

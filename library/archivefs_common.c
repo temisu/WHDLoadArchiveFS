@@ -72,11 +72,20 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 	if (ret>=0)
 	{
 		archive->blockIndex=blockIndex;
-		archive->blockPos=0;
+		if (((int32_t)archive->blockPos)<0)
+		{
+			archive->blockPos=~archive->blockPos;
+		} else {
+			archive->blockPos=0;
+		}
 		archive->blockLength=ret;
+		if (archive->blockPos>archive->blockLength)
+		{
+			archive->blockPos=0;
+			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		}
 		return 0;
 	} else {
-		archive->blockIndex=~0U;
 		archive->blockPos=0;
 		archive->blockLength=0;
 		return ret;
@@ -86,12 +95,13 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *archive)
 {
 	uint32_t blockIndex=offset>>archive->blockShift;
-	int ret;
 
-	if ((ret=archivefs_common_readBlockBuffer(blockIndex,archive))<0) return ret;
 	archive->blockPos=offset&((1U<<archive->blockShift)-1U);
 	if (archive->blockPos>=archive->blockLength)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+	archive->blockPos=~archive->blockPos;
+	archive->blockLength=archive->blockPos;
+	archive->blockIndex=blockIndex-1;
 	return 0;
 }
 
@@ -107,6 +117,26 @@ int32_t archivefs_common_readNextBytes(uint8_t **dest,uint32_t length,struct arc
 	*dest=archive->blockData+archive->blockPos;
 	archive->blockPos+=length;
 	return length;
+}
+
+int archivefs_common_skipNextBytes(uint32_t length,struct archivefs_state *archive)
+{
+	uint32_t max;
+	uint32_t blockSize=1U<<archive->blockShift;
+
+	max=archive->blockLength-archive->blockPos;
+	/* TODO: error handling */
+	if (length>max)
+	{
+		length-=max;
+		archive->blockIndex+=length>>archive->blockShift;
+		archive->blockPos=~(length&(blockSize-1U));
+		archive->blockLength=archive->blockPos;
+		return 0;
+	} else {
+		archive->blockPos+=length;
+		return 0;
+	}
 }
 
 /* TODO: make it proper, or use library */

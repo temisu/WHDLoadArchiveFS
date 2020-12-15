@@ -9,6 +9,8 @@
 #endif
 	uint16_t historyPos=state->historyPos;
 	uint8_t *history=state->history;
+	uint16_t accumulator=state->accumulator;
+	uint8_t bitsLeft=state->bitsLeft;
 	int32_t ret;
 	struct archivefs_state *archive;
 
@@ -32,7 +34,7 @@
 				symbol--;
 			}
 		}
-		while (pos<targetLength && symbol--)
+		while (pos<targetLength && symbol)
 		{
 			uint8_t ch;
 
@@ -43,6 +45,7 @@
 			dest[bufferPos++]=ch;
 #endif
 			pos++;
+			symbol--;
 		}
 	}
 
@@ -50,12 +53,16 @@
 	{
 		if (!blockLength)
 		{
+			state->accumulator=accumulator;
+			state->bitsLeft=bitsLeft;
 			blockLength=ret=archivefs_lhaInitializeBlock(state);
 			if (ret<0) return ret;
+			accumulator=state->accumulator;
+			bitsLeft=state->bitsLeft;
 		}
 		blockLength--;
 
-		archivefs_lhaHuffmanDecode(symbol,state,state->symbolTree);
+		archivefs_lhaHuffmanDecode(symbol,state->symbolTree);
 		if (symbol<256U)
 		{
 			history[historyPos++]=symbol;
@@ -86,7 +93,7 @@
 					symbol--;
 				}
 			}
-			while (pos<targetLength && symbol--)
+			while (pos<targetLength && symbol)
 			{
 				uint8_t ch;
 
@@ -97,6 +104,7 @@
 				dest[bufferPos++]=ch;
 #endif
 				pos++;
+				symbol--;
 			}
 		}
 	}
@@ -106,4 +114,6 @@
 	state->remainingRepeat=symbol;
 	state->distance=distance;
 	state->historyPos=historyPos;
+	state->accumulator=accumulator;
+	state->bitsLeft=bitsLeft;
 	return 0;
