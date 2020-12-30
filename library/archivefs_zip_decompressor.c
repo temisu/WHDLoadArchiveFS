@@ -11,19 +11,17 @@
 		value=0; \
 		while (_bits) \
 		{ \
-			if ((state)->bitsLeft<_bits) \
+			if (bitsLeft<_bits) \
 			{ \
-				struct archivefs_state *archive; \
-				(value)|=((uint16_t)((state)->accumulator&((1U<<(state)->bitsLeft)-1U)))<<bitPos; \
-				archive=(state)->archive; \
-				archivefs_common_readNextByte((state)->accumulator,archive); \
-				bitPos+=(state)->bitsLeft; \
-				_bits-=(state)->bitsLeft; \
-				(state)->bitsLeft=8U; \
+				(value)|=((uint16_t)(accumulator&((1U<<bitsLeft)-1U)))<<bitPos; \
+				archivefs_common_readNextByte(accumulator,archive); \
+				bitPos+=bitsLeft; \
+				_bits-=bitsLeft; \
+				bitsLeft=8U; \
 			} else { \
-				(value)|=((uint16_t)((state)->accumulator&((1U<<_bits)-1U)))<<bitPos; \
-				(state)->accumulator>>=_bits; \
-				(state)->bitsLeft-=_bits; \
+				(value)|=((uint16_t)(accumulator&((1U<<_bits)-1U)))<<bitPos; \
+				accumulator>>=_bits; \
+				bitsLeft-=_bits; \
 				break; \
 			} \
 		} \
@@ -31,18 +29,16 @@
 
 #define archivefs_zipReadBit(incr) \
 	do { \
-		if (!(state)->bitsLeft) \
+		if (!bitsLeft) \
 		{ \
-			struct archivefs_state *archive; \
-			archive=state->archive; \
-			archivefs_common_readNextByte(state->accumulator,archive); \
-			state->bitsLeft=7U; \
-		} else (state)->bitsLeft--; \
-		if (state->accumulator&1U) incr+=2; \
-		state->accumulator>>=1U; \
+			archivefs_common_readNextByte(accumulator,archive); \
+			bitsLeft=7U; \
+		} else bitsLeft--; \
+		if (accumulator&1U) incr+=2; \
+		accumulator>>=1U; \
 	} while (0)
 
-#define archivefs_zipHuffmanDecode(symbol,state,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_zipReadBit)
+#define archivefs_zipHuffmanDecode(symbol,nodes) archivefs_HuffmanDecode(symbol,nodes,archivefs_zipReadBit)
 
 void archivefs_zipDecompressInitialize(struct archivefs_zipDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength)
 {
@@ -58,6 +54,7 @@ void archivefs_zipDecompressInitialize(struct archivefs_zipDecompressState *stat
 	state->bitsLeft=0;
 
 	state->mode=0;
+	state->final=0;
 
 	state->blockRemaining=0;
 	state->remainingRepeat=0;
@@ -75,6 +72,7 @@ static void archivefs_zipDecompressReset(struct archivefs_zipDecompressState *st
 	state->bitsLeft=0;
 
 	state->mode=0;
+	state->final=0;
 
 	state->blockRemaining=0;
 	state->remainingRepeat=0;
@@ -89,22 +87,20 @@ static const uint8_t archivefs_zipLengthTableOrder[19]={
 
 static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState *state)
 {
-	uint16_t i,nodeCount;
+	uint16_t i,nodeCount,mode;
+	uint8_t bitsLeft=state->bitsLeft,accumulator=state->accumulator;
 	int ret;
-	uint8_t mode;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	archivefs_zipReadBits(mode,2U);
 	state->mode=mode;
 	switch (mode)
 	{
 		case 0:
 		{
-			uint16_t len,nlen;
-			uint8_t tmp;
-			struct archivefs_state *archive;
+			uint16_t len,nlen,tmp;
 
-			archive=state->archive;
-			state->bitsLeft=0;
 			archivefs_common_readNextByte(tmp,archive);
 			len=tmp;
 			archivefs_common_readNextByte(tmp,archive);
@@ -115,6 +111,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 			nlen|=((uint16_t)tmp)<<8U;
 			if (len!=~nlen)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+			state->bitsLeft=0;
 			return len;
 		}
 
@@ -122,24 +119,19 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 		archivefs_HuffmanReset(state->symbolTree);
 		nodeCount=1;
 		/* Yup! There are 288 codes total even though the last 2 ones are not defined in any spec */
-		for (i=0;i<0x18U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,7U,i,i+0x100U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x30U;i<0xc0U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i-0x30U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0xc0U;i<0xc6U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i+0x58U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0xc6U;i<0xc8U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,0x11dU)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x190U;i<0x200U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,9U,i,i-0x100U)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		for (i=0;i<0x18U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,7U,i,i+0x100U);
+		for (i=0x30U;i<0xc0U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i-0x30U);
+		for (i=0xc0U;i<0xc6U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,i+0x58U);
+		for (i=0xc6U;i<0xc8U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,8U,i,0x11dU);
+		for (i=0x190U;i<0x200U;i++) nodeCount=archivefs_HuffmanInsert(state->symbolTree,nodeCount,9U,i,i-0x100U);
 
 		archivefs_HuffmanReset(state->distanceTree);
 		nodeCount=1;
 		/* Ditto: there are 32 codes, even though 30 is used */
-		for (i=0;i<0x1eU;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,i)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
-		for (i=0x1e;i<0x20U;i++) if (!(nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,29)))
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		for (i=0;i<0x1eU;i++) nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,i);
+		for (i=0x1e;i<0x20U;i++) nodeCount=archivefs_HuffmanInsert(state->distanceTree,nodeCount,5U,i,29);
+		state->bitsLeft=bitsLeft;
+		state->accumulator=accumulator;
 		return 1;
 
 		case 2:
@@ -169,7 +161,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 			{
 				uint16_t tmp;
 
-				archivefs_zipHuffmanDecode(tmp,state,state->symbolTree);
+				archivefs_zipHuffmanDecode(tmp,state->symbolTree);
 				switch (tmp)
 				{
 					case 16:
@@ -208,6 +200,8 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 			if ((ret=archivefs_HuffmanCreateOrderlyTable(state->symbolTree,lengthTable,symbolCount))<0) return ret;
 			if ((ret=archivefs_HuffmanCreateOrderlyTable(state->distanceTree,lengthTable+symbolCount,distanceCount))<0) return ret;
 		}
+		state->bitsLeft=bitsLeft;
+		state->accumulator=accumulator;
 		return 1;
 
 		default:
@@ -239,14 +233,16 @@ static const uint8_t archivefs_zipDistanceBits[30]={
 	 7, 7, 8, 8, 9, 9,10,10,
 	11,11,12,12,13,13};
 
-
 static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *state,uint8_t *dest)
 {
 	uint32_t length=state->rawLength;
 	uint32_t pos,blockLength=0;
 	uint16_t count,distance,final=0;
-	int ret;
+	int32_t ret;
+	uint8_t bitsLeft=state->bitsLeft,accumulator=state->accumulator;
+	struct archivefs_state *archive;
 
+	archive=state->archive;
 	for (pos=0;pos<length;)
 	{
 		if (!blockLength)
@@ -254,26 +250,35 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 			if (final)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 			archivefs_zipReadBits(final,1U);
+			state->bitsLeft=bitsLeft;
+			state->accumulator=accumulator;
 			blockLength=ret=archivefs_zipInitializeBlock(state);
 			if (ret<0) return ret;
+			bitsLeft=state->bitsLeft;
+			accumulator=state->accumulator;
 		}
 		if (!state->mode)
 		{
-			struct archivefs_state *archive;
+			uint32_t bufLength=blockLength;
+			uint8_t *buffer;
 
-			archive=state->archive;
-			while (blockLength && pos<length)
+			if (pos+blockLength>length)
+				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+
+			while (bufLength)
 			{
-				archivefs_common_readNextByte(dest[pos],archive);
-				pos++;
-				blockLength--;
+				if ((ret=archivefs_common_readNextBytes(&buffer,bufLength,archive))<0) return ret;
+				archivefs_common_memcpy(dest+pos,buffer,ret);
+				pos+=ret;
+				bufLength-=ret;
 			}
+			blockLength=0;
 		} else {
 			uint16_t symbol;
 
 			while (pos<length)
 			{
-				archivefs_zipHuffmanDecode(symbol,state,state->symbolTree);
+				archivefs_zipHuffmanDecode(symbol,state->symbolTree);
 				if (symbol<256U)
 					dest[pos++]=symbol;
 				else if (symbol==256U) {
@@ -288,7 +293,7 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 					if (pos+count>length)
 						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 
-					archivefs_zipHuffmanDecode(code,state,state->distanceTree);
+					archivefs_zipHuffmanDecode(code,state->distanceTree);
 					archivefs_zipReadBits(distance,archivefs_zipDistanceBits[code]);
 					distance+=archivefs_zipDistanceAdditions[code];
 					if (distance>pos)
@@ -309,12 +314,14 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 
 static int archivefs_zipDecompressSkip(struct archivefs_zipDecompressState *state,uint32_t targetLength)
 {
-	return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+#define ARCHIVEFS_ZIP_DECOMPRESS_SKIP 1
+#include "archivefs_zip_decompressor_template.h"
 }
 
 static int archivefs_zipDecompressPartial(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t targetLength)
 {
-	return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+#undef ARCHIVEFS_ZIP_DECOMPRESS_SKIP
+#include "archivefs_zip_decompressor_template.h"
 }
 
 int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset)

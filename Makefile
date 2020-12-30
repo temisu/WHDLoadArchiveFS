@@ -42,6 +42,7 @@ obj/archivefs_integration_amiga_standalone.o: archivefs_integration_amiga.c | ob
 ifeq ($(TARGET), Amiga)
 obj/archivefs_huffman_decoder.o: CFLAGS+=-speed
 obj/archivefs_lha_decompressor.o: CFLAGS+=-speed
+obj/archivefs_zip_decompressor.o: CFLAGS+=-speed
 endif
 obj/%.o: %.c | obj
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -75,3 +76,6 @@ run_tests: $(PROG)
 	@./testing/run_test.sh testing/test17.txt
 	@./testing/run_test.sh testing/test18.txt
 	@./testing/run_test.sh testing/test19.txt
+	@./testing/run_test.sh testing/test20.txt
+	@./testing/run_test.sh testing/test21.txt
+	@./testing/run_test.sh testing/test22.txt

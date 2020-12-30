@@ -1,0 +1,12 @@
+DESCRIPTION:
+Test zip compressed readFile
+--END
+PARAMS:
+read testing/test_files/test_compressed.zip TemplosSagradosHD/Manual
+--END
+OUTPUT:
+----------------------------------------------------------------------------
+Read:
+CRC for 'TemplosSagradosHD/Manual': 0xfe753eaa
+----------------------------------------------------------------------------
+--END
