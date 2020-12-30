@@ -80,7 +80,10 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		break;
 
 		case '0':
+#if 0
+/* not supported */
 		case '1':
+#endif
 		case '4':
 		case '5':
 		case '6':
