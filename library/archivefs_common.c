@@ -64,10 +64,14 @@ void archivefs_common_handleProgress(struct archivefs_state *archive)
 
 int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state *archive)
 {
-	int ret;
+	int32_t ret;
 
 	archivefs_common_handleProgress(archive);
-	if (blockIndex==archive->blockIndex) return 0;
+	if (blockIndex==archive->blockIndex && ((int32_t)(archive->blockLength)>0))
+	{
+		archive->blockPos=0;
+		return 0;
+	}
 	ret=archivefs_common_readBlockRaw(archive->blockData,blockIndex,archive);
 	if (ret>=0)
 	{
@@ -82,6 +86,7 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 		if (archive->blockPos>archive->blockLength)
 		{
 			archive->blockPos=0;
+			archive->blockLength=0;
 			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		}
 		return 0;
@@ -96,12 +101,15 @@ int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *arc
 {
 	uint32_t blockIndex=offset>>archive->blockShift;
 
-	archive->blockPos=offset&((1U<<archive->blockShift)-1U);
-	if (archive->blockPos>=archive->blockLength)
+	if (offset>=archive->fileLength)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
-	archive->blockPos=~archive->blockPos;
-	archive->blockLength=archive->blockPos;
-	archive->blockIndex=blockIndex-1;
+	archive->blockPos=offset&((1U<<archive->blockShift)-1U);
+	if (blockIndex!=archive->blockIndex && ((int32_t)(archive->blockLength)>0))
+	{
+		archive->blockPos=~archive->blockPos;
+		archive->blockLength=archive->blockPos;
+		archive->blockIndex=blockIndex-1;
+	}
 	return 0;
 }
 

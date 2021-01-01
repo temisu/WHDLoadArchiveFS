@@ -420,27 +420,29 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 			if (entry) archivefs_free(entry);
 			return offset;
 		}
-		if (entry->dataType)
+		switch (entry->dataType)
 		{
-			switch (entry->dataType)
-			{
-				case 1:
-				hasLH1=1;
-				break;
+			case 0:
+			break;
 
-				case 4:
-				case 5:
-				hasLH45=1;
-				break;
-
-				case 6:
-				hasLH6=1;
-				break;
-
-				default:
-				break;
-			}
+			case 1:
+			hasLH1=1;
 			usesCompression=1;
+			break;
+
+			case 4:
+			case 5:
+			hasLH45=1;
+			usesCompression=1;
+			break;
+
+			case 6:
+			hasLH6=1;
+			usesCompression=1;
+			break;
+
+			default:
+			return ARCHIVEFS_ERROR_INVALID_FORMAT;
 		}
 		archivefs_common_insertFileEntry(archive,entry);
 	}
