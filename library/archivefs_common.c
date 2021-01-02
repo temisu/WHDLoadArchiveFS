@@ -20,13 +20,13 @@ static int32_t archivefs_common_readPartial(void *dest,uint32_t length,uint32_t 
 	return length;
 }
 
-static int32_t archivefs_common_readBlockRaw(void *dest,uint32_t blockIndex,struct archivefs_state *archive)
+static int32_t archivefs_common_readBlocksRaw(void *dest,uint32_t blockIndex,uint32_t count,struct archivefs_state *archive)
 {
 	uint32_t offset=blockIndex<<archive->blockShift;
-	uint32_t blockSize=1U<<archive->blockShift;
+	uint32_t blocksSize=(1U<<archive->blockShift)*count;
 	uint32_t length=archive->fileLength-offset;
 
-	if (length>blockSize) length=blockSize;
+	if (length>blocksSize) length=blocksSize;
 	return archivefs_common_readPartial(dest,length,offset,archive);
 }
 
@@ -72,7 +72,7 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 		archive->blockPos=0;
 		return 0;
 	}
-	ret=archivefs_common_readBlockRaw(archive->blockData,blockIndex,archive);
+	ret=archivefs_common_readBlocksRaw(archive->blockData,blockIndex,1U,archive);
 	if (ret>=0)
 	{
 		archive->blockIndex=blockIndex;
@@ -212,10 +212,7 @@ int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct arch
 		{
 			archivefs_common_handleProgress(archive);
 			dest=(uint8_t*)dest+destCopied;
-			continue;
-		}
-		if (i==newBufferBlock)
-		{
+		} else if (i==newBufferBlock) {
 			if ((ret=archivefs_common_readBlockBuffer(i,archive))<0) return ret;
 			ret=archivefs_common_copyBlock(dest,startBlock,maxBlock,i,length,offset,archive);
 			if (ret<0) return ret;
@@ -236,9 +233,14 @@ int archivefs_common_read(void *dest,uint32_t length,uint32_t offset,struct arch
 				if (!currentBlockLength) currentBlockLength=blockSize;
 				if ((ret=archivefs_common_readPartial(dest,currentBlockLength,((blockSize-offset)&(blockSize-1U))+((i-startBlock-1U)<<blockShift),archive))<0) return ret;
 			} else {
-				/* the most common case. In middle of the file, throw away block directly to dest buffer */
-				if ((ret=archivefs_common_readBlockRaw(dest,i,archive))<0) return ret;
-				dest=(uint8_t*)dest+blockSize;
+				/* the most common case. In middle of the file, throw away block(s) directly to dest buffer */
+				uint32_t maxCount=maxBlock-1U-i;
+				if (currentBufferBlock>i) maxCount=currentBufferBlock-i;
+				if (newBufferBlock>i && maxCount>newBufferBlock-i) maxCount=newBufferBlock-i;
+
+				if ((ret=archivefs_common_readBlocksRaw(dest,i,maxCount,archive))<0) return ret;
+				dest=(uint8_t*)dest+blockSize*maxCount;
+				i+=maxCount-1U;
 			}
 		}
 	}
