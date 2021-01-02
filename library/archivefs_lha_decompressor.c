@@ -95,6 +95,8 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 		value=0;
 		archivefs_lhaReadBits(value,bits);
 		archivefs_HuffmanCreateEmptyTable(nodes,value);
+		state->accumulator=accumulator;
+		state->bitsLeft=bitsLeft;
 		return 0;
 	}
 	for (i=0;i<tableLength;)

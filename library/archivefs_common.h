@@ -5,7 +5,7 @@
 
 #include "archivefs_private.h"
 
-#define GET_LE32(x) (((uint16_t)((x)[0]))|(((uint16_t)((x)[1]))<<8)|(((uint16_t)((x)[2]))<<16)|(((uint16_t)((x)[3]))<<24))
+#define GET_LE32(x) (((uint32_t)((x)[0]))|(((uint32_t)((x)[1]))<<8)|(((uint32_t)((x)[2]))<<16)|(((uint32_t)((x)[3]))<<24))
 #define GET_LE16(x) (((uint16_t)((x)[0]))|(((uint16_t)((x)[1]))<<8))
 
 #ifdef __M68K__

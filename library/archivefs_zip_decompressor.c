@@ -109,7 +109,8 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 			nlen=tmp;
 			archivefs_common_readNextByte(tmp,archive);
 			nlen|=((uint16_t)tmp)<<8U;
-			if (len!=~nlen)
+			nlen=~nlen;
+			if (len!=nlen)
 				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
 			state->bitsLeft=0;
 			return len;
