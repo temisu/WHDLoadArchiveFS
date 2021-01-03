@@ -18,4 +18,4 @@
 	dc.l	_archivefs_getErrorString
 
 _name:
-	dc.b 'ArchiveFS 1.01 beta',0
+	dc.b 'ArchiveFS 1.02 beta',0
