@@ -1,0 +1,76 @@
+.key Slave/A,DataDir/A,WHDLoadOptions/M
+.bra [
+.ket ]
+
+; create archives if they do not exist
+; run WHDLoadPP which each data type
+; requirements:
+;	WHDLoadPP
+;	http://aminet.net/package/util/pack/xPackBest
+;	ixemul tools du and awk (or native ones)
+
+set DATA [DataDir]
+
+if not exists $DATA
+	echo directory $DATA not found
+	exit
+endif
+
+if not exists $DATA.xpk
+	copy $DATA $DATA.xpk clone all
+	xpackbest $DATA.xpk mash.100 sqsh.100
+endif
+
+if not exists $DATA.0.lha
+	lha -aerZF -z a $DATA.0.lha $DATA
+endif
+;if not exists $DATA.1.lha
+;	lha -aerZF -0 a $DATA.1.lha $DATA
+;endif
+if not exists $DATA.5.lha
+	lha -aerZF -2 a $DATA.5.lha $DATA
+endif
+if not exists $DATA.6.lha
+	lha -aerZF -3 a $DATA.6.lha $DATA
+endif
+
+if not exists $DATA.0.zip
+	zip -r0N $DATA.0.zip $DATA
+endif
+if not exists $DATA.1.zip
+	zip -r1N $DATA.1.zip $DATA
+endif
+if not exists $DATA.9.zip
+	zip -r9N $DATA.9.zip $DATA
+endif
+
+du -sb $DATA >T:du
+set PS `awk {printf("%d",$1*1.12)} t:du`
+type T:du
+du -sb $DATA.xpk
+list #?.lha sort=n lformat="%l %s"
+list #?.zip sort=n lformat="%l %s"
+
+set WHD "WHDLoadPP [Slave] NoReq SplashDelay=1 Preload PreloadSize=$PS [WHDLoadOptions] Data"
+echo "Command=$WHD"
+FailAt 20
+
+echo "plain " noline
+$WHD $DATA
+echo "xpk   " noline
+$WHD $DATA.xpk
+echo "lha-0 " noline
+$WHD $DATA.0.lha
+;echo "lha-1 " noline
+;$WHD $DATA.1.lha
+echo "lha-5 " noline
+$WHD $DATA.5.lha
+echo "lha-6 " noline
+$WHD $DATA.6.lha
+echo "zip-0 " noline
+$WHD $DATA.0.zip
+echo "zip-1 " noline
+$WHD $DATA.1.zip
+echo "zip-9 " noline
+$WHD $DATA.9.zip
+

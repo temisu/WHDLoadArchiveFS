@@ -1,0 +1,70 @@
+
+CSPPC/68060@60, IBM-DNES-318350W
+OS 3.1.4.1 SFS 1.279
+XPK: xpackbest mash.100 sqsh.100
+
+BeneathASteelSkyCD32
+--------------------
+5039 files
+90459801 data-cd32
+58254483 data-cd32.xpk
+90727466 data-cd32.0.lha
+67475658 data-cd32.1.lha
+66901471 data-cd32.5.lha
+66962830 data-cd32.6.lha
+91136817 data-cd32.0.zip
+68301169 data-cd32.1.zip
+67191970 data-cd32.9.zip
+
+plain init 0.00 dircache 16.80 filecache 19.82 sum 36.62 ()
+xpk   init 0.00 dircache 14.98 filecache 45.94 sum 60.92 ()
+lha-0 init 9.52 dircache 3.80 filecache 19.34 sum 32.66 (ArchiveFS 1.02 beta)
+lha-5 init 7.52 dircache 3.82 filecache 199.46 sum 210.80 (ArchiveFS 1.02 beta)
+lha-6 init 8.54 dircache 3.82 filecache 199.88 sum 212.24 (ArchiveFS 1.02 beta)
+zip-0 init 0.48 dircache 3.82 filecache 18.56 sum 22.86 (ArchiveFS 1.02 beta)
+zip-1 init 0.46 dircache 3.82 filecache 251.14 sum 255.42 (ArchiveFS 1.02 beta)
+zip-9 init 0.50 dircache 4.48 filecache 242.90
+
+SpaceAce2
+---------
+6 files
+5121056 data-pal
+3840256 data-pal.xpk
+5120341 data-pal.0.lha
+3938178 data-pal.1.lha
+3679807 data-pal.5.lha
+3638673 data-pal.6.lha
+5120926 data-pal.0.zip
+3757766 data-pal.1.zip
+3644878 data-pal.9.zip
+
+plain init 0.00 dircache 0.00 filecache 0.40 sum 0.40 ()
+xpk   init 0.00 dircache 0.00 filecache 2.02 sum 2.02 ()
+lha-0 init 0.08 dircache 0.00 filecache 0.40 sum 0.48 (ArchiveFS 1.02 beta)
+lha-5 init 0.08 dircache 0.00 filecache 11.16 sum 11.24 (ArchiveFS 1.02 beta)
+lha-6 init 0.08 dircache 0.00 filecache 10.80 sum 10.88 (ArchiveFS 1.02 beta)
+zip-0 init 0.02 dircache 0.00 filecache 0.44 sum 0.46 (ArchiveFS 1.02 beta)
+zip-1 init 0.04 dircache 0.00 filecache 13.32 sum 13.36 (ArchiveFS 1.02 beta)
+zip-9 init 0.02 dircache 0.00 filecache 12.96 sum 12.98 (ArchiveFS 1.02 beta)
+
+Workbench31
+-----------
+567 files
+3075621 data
+1890696 data.xpk
+3019804 data.0.lha
+1736387 data.5.lha
+1707204 data.6.lha
+3082551 data.0.zip
+1831933 data.1.zip
+1763587 data.9.zip
+
+plain init 0.00 dircache 1.02 filecache 1.30 sum 2.32 ()
+xpk   init 0.02 dircache 1.16 filecache 2.64 sum 3.82 ()
+lha-0 init 0.62 dircache 0.04 filecache 0.84 sum 1.50 (ArchiveFS 1.02 beta)
+lha-5 init 0.42 dircache 0.06 filecache 6.08 sum 6.56 (ArchiveFS 1.02 beta)
+lha-6 init 0.44 dircache 0.06 filecache 5.96 sum 6.46 (ArchiveFS 1.02 beta)
+zip-0 init 0.14 dircache 0.04 filecache 0.90 sum 1.08 (ArchiveFS 1.02 beta)
+zip-1 init 0.14 dircache 0.04 filecache 7.32 sum 7.50 (ArchiveFS 1.02 beta)
+zip-9 init 0.14 dircache 0.04 filecache 7.06 sum 7.24 (ArchiveFS 1.02 beta)
+
