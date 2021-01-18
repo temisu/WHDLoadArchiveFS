@@ -49,22 +49,29 @@ static void archivefs_createFIB(struct FIB *dest,const struct archivefs_cached_f
 	dest->gid=0;
 }
 
+static int archivefs_stringCaseCompare(const char *name1,const char *name2)
+{
+	/* does not support international filenames (as defined in Amiga) */
+	for (;;)
+	{
+		unsigned char ch1=*(name1++);
+		unsigned char ch2=*(name2++);
+		if (!ch1 && !ch2) return 1;
+		if (ch1>='a' && ch1<='z') ch1-=0x20U;
+		if (ch2>='a' && ch2<='z') ch2-=0x20U;
+		if (ch1!=ch2) return 0;
+	}
+}
+
 static struct archivefs_cached_file_entry *archivefs_findEntry(struct archivefs_state *archive,const char *name)
 {
 	struct archivefs_cached_file_entry *entry;
-	const char *name1,*name2;
 
 	entry=archive->firstEntry;
 	while (entry)
 	{
-		name1=entry->pathAndName;
-		name2=name;
-		while(*name1 && *name1==*name2)
-		{
-			name1++;
-			name2++;
-		}
-		if (!*name1 && !*name2)
+		int match=archivefs_stringCaseCompare(entry->pathAndName,name);
+		if (match)
 			return entry;
 		entry=entry->next;
 	}
@@ -230,21 +237,11 @@ int32_t archivefs_fileRead(void *_archive,void *dest,const char *name,uint32_t l
 	struct archivefs_combined_state *combined=(struct archivefs_combined_state*)_archive;
 	struct archivefs_state *archive=&combined->archive;
 	struct archivefs_cached_file_entry *entry;
-	const char *name1,*name2;
 	int fileLoaded;
 
 	fileLoaded=0;
 	if (combined->currentFile)
-	{
-		name1=name;
-		name2=combined->currentFile->pathAndName;
-		while(*name1&&*name1==*name2)
-		{
-			name1++;
-			name2++;
-		}
-		fileLoaded=!*name1&&!*name2;
-	}
+		fileLoaded=archivefs_stringCaseCompare(name,combined->currentFile->pathAndName);
 	if (!fileLoaded)
 	{
 		entry=archivefs_findEntry(archive,name);
