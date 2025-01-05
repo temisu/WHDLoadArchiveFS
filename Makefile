@@ -2,7 +2,7 @@
 
 VPATH	:= library testing
 
-TARGET := Amiga
+TARGET ?= Amiga
 
 ifneq ($(TARGET), Amiga)
 CC	= clang
@@ -14,7 +14,7 @@ else
 AS	= vasmm68k_mot
 CC	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
-AFLAGS	= -Fhunk -I$(INCLUDEOS3)
+AFLAGS	= -Fhunk -I$(INCLUDEOS3) -quiet
 LDFLAGS = -sc -O2 -final
 INTEGRATION_OBJ = archivefs_integration_amiga.o
 LIB	= WHDLoad.VFS
@@ -33,7 +33,7 @@ all: $(PROG) $(LIB)
 obj:
 	mkdir $@
 
-obj/%.o: %.S | obj
+obj/%.o: %.S .date .ccver | obj
 	$(AS) $(AFLAGS) -o $@ $<
 
 obj/archivefs_integration_amiga_standalone.o: archivefs_integration_amiga.c | obj
@@ -53,8 +53,16 @@ $(PROG): $(OBJS_TEST)
 $(LIB): $(OBJS_LIB)
 	$(CC) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -lvc -lamiga
 
+.date:
+	date "+(%d.%m.%Y)" | xargs printf > $@
+
+.ccver:
+	vbccm68k 2>/dev/null | awk '/vbcc V/ { printf " "$$1" "$$2 } /vbcc code/ { printf " "$$4" "$$5 }' > $@
+
+.PHONY: all clean .date .ccver
+
 clean:
-	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~
+	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~ .date .ccver
 
 run_tests: $(PROG)
 	@./testing/run_test.sh testing/test1.txt
@@ -79,3 +87,4 @@ run_tests: $(PROG)
 	@./testing/run_test.sh testing/test20.txt
 	@./testing/run_test.sh testing/test21.txt
 	@./testing/run_test.sh testing/test22.txt
+

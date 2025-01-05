@@ -47,7 +47,7 @@ lha -earz a <archive>.lha <directory>
 
 For Lha (compressed):
 ```
-lha -earz a <archive>.lha <directory>
+lha -ear a <archive>.lha <directory>
 ```
 
 For Zip (uncompressed):

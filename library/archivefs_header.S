@@ -17,5 +17,9 @@
 	dc.l	_archivefs_fileRead
 	dc.l	_archivefs_getErrorString
 
-_name:
-	dc.b 'ArchiveFS 1.02 beta',0
+	dc.b	"$VER: "
+_name	dc.b 'ArchiveFS 1.3 '
+	INCBIN	.date
+	INCBIN	.ccver
+	dc.b	0
+
