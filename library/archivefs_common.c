@@ -3,7 +3,7 @@
 #include "archivefs_private.h"
 #include "archivefs_integration.h"
 
-static int32_t archivefs_common_readPartial(void *dest,uint32_t length,uint32_t offset,struct archivefs_state *archive)
+static int32_t archivefs_common_readPartial(void *dest,int32_t length,uint32_t offset,struct archivefs_state *archive)
 {
 	int ret;
 
@@ -113,7 +113,7 @@ int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *arc
 	return 0;
 }
 
-int32_t archivefs_common_readNextBytes(uint8_t **dest,uint32_t length,struct archivefs_state *archive)
+int32_t archivefs_common_readNextBytes(uint8_t **dest,int32_t length,struct archivefs_state *archive)
 {
 	uint32_t max;
 	int32_t ret;
@@ -157,7 +157,7 @@ void archivefs_common_memcpy(void *dest,const void *src,uint32_t length)
 
 static int32_t archivefs_common_copyBlock(uint8_t *dest,uint32_t startBlock,uint32_t maxBlock,uint32_t currentBufferBlock,uint32_t length,uint32_t offset,struct archivefs_state *archive)
 {
-	uint32_t currentBlockLength,copyOffset;
+	int32_t currentBlockLength,copyOffset;
 	uint8_t blockShift=archive->blockShift;
 	uint32_t blockSize=1U<<blockShift;
 

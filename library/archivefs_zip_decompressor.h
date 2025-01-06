@@ -36,6 +36,6 @@ struct archivefs_zipDecompressState
 };
 
 void archivefs_zipDecompressInitialize(struct archivefs_zipDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength);
-int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
+int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,int32_t length,uint32_t offset);
 
 #endif

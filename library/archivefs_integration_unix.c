@@ -49,13 +49,13 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 
 int archivefs_integration_fileClose(void *file)
 {
-	close((int)file);
+	close((size_t)file);
 	return 0;
 }
 
 int archivefs_integration_fileSeek(uint32_t offset,void *file)
 {
-	int fd=(int)file;
+	int fd=(size_t)file;
 	int ret=lseek(fd,offset,SEEK_SET);
 	if (ret<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;
@@ -64,7 +64,7 @@ int archivefs_integration_fileSeek(uint32_t offset,void *file)
 
 int32_t archivefs_integration_fileRead(void *dest,uint32_t length,void *file)
 {
-	int fd=(int)file;
+	int fd=(size_t)file;
  	int ret=read(fd,dest,length);
 	if (ret<0)
 		return ARCHIVEFS_ERROR_INVALID_FORMAT;

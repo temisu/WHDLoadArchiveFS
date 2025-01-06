@@ -117,7 +117,7 @@ int archivefs_uninitialize(void *archive);
 	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
 	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
-int32_t archivefs_getFileSize(void *archive,const char *name);
+uint32_t archivefs_getFileSize(void *archive,const char *name);
 
 /*
    Read (chosen) files into fileCache.

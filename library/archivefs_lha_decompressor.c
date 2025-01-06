@@ -133,7 +133,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 
 static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState *state)
 {
-	uint32_t blockRemaining;
+	int32_t blockRemaining;
 	uint16_t i,tableLength,rep;
 	int32_t ret;
 	uint16_t value;
@@ -284,7 +284,7 @@ static int archivefs_lhaDecompressPartial(struct archivefs_lhaDecompressState *s
 #include "archivefs_lha_decompressor_template.h"
 }
 
-int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset)
+int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,int32_t length,uint32_t offset)
 {
 	uint16_t mask=state->method==6U?ARCHIVEFS_LHA_LH6_HISTORY_SIZE-1:(ARCHIVEFS_LHA_LH5_HISTORY_SIZE-1);
 	int ret;

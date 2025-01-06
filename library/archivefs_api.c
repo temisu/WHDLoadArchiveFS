@@ -172,7 +172,7 @@ int archivefs_uninitialize(void *_archive)
 	return 0;
 }
 
-int32_t archivefs_getFileSize(void *_archive,const char *name)
+uint32_t archivefs_getFileSize(void *_archive,const char *name)
 {
 	const struct archivefs_cached_file_entry *entry;
 	struct archivefs_state *archive=&((struct archivefs_combined_state*)_archive)->archive;
@@ -201,7 +201,7 @@ int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 		{
 			ptr=fileFunc(tmp->pathAndName,tmp->length);
 			if (!ptr) return ARCHIVEFS_ERROR_OPERATION_CANCELED;
-			if (((int)ptr)!=-1)
+			if (((long)ptr)!=-1)
 			{
 				ret=archivefs_fileReadRaw(combined,ptr,tmp,tmp->length,0,1);
 				if (ret<0) return ret;

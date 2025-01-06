@@ -2,6 +2,7 @@
 
 #include "archivefs_integration.h"
 
+#include <exec/memory.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <stdlib.h>
