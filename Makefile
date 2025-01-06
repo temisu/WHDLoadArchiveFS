@@ -39,8 +39,8 @@ endif
 ifeq ($(TARGET),AmigaS)
 AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
 CC	= $(VAMOS) sc
-CFLAGS	= IdentifierLength=40 IncludeDirectory=library Optimize OptimizerSchedule NoStackCheck NoVersion
-CFSPEED	= OptimizerTime
+CFLAGS	= Data=FarOnly IdentifierLength=40 IncludeDirectory=library Optimize OptimizerSchedule NoStackCheck NoVersion
+CFSPEED	= OptimizerTime OptimizerComplexity=10 OptimizerInLocal
 CFLAGC	=
 CFLAGD	= Define=
 CFLAGO	= ObjectName=
