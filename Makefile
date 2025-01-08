@@ -4,40 +4,52 @@ VPATH	:= library testing
 
 # possible targets:
 #	Amiga	build with vbcc
-#	AmigaS	build with SAS/C, requires vamos (https://github.com/cnvogelg/amitools)
+#	AmigaG	build with m68k-amigaos-gcc, requires https://github.com/bebbo/amiga-gcc
+#	AmigaS	build with SAS/C, requires vamos (https://github.com/cnvogelg/amitools) on Linux/MacOS
 #	*	build with clang for testing
-TARGET	?= AmigaS
+TARGET	?= AmigaG
 
+# set vamos if cross compile
 ifneq ($(shell uname -s),AmigaOS)
 VAMOS	= vamos -q --
 endif
 
+# because SAS/C has non standard arguments
 CFLAGC	= -c
 CFLAGD	= -D
 CFLAGO	= -o
 CFLAGP	= -o
 
 ifeq (,$(findstring Amiga,$(TARGET)))
+# non Amiga targets
 CC	= clang
 CFLAGS	= -g -Wall -Werror -Ilibrary -I.
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_unix.o
 LIB	=
 else
-
-ifeq ($(TARGET),Amiga)
+# Amiga* targets
+# too lazy to construct AS for gcc/sas
 AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
+ifeq ($(TARGET),Amiga)
 CC	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
 CFSPEED	= -speed
 CFLAGO	= -o 
 CFLAGP	= -o 
-LDFLAGS = -sc -O2 -final
-MKLIB	= $(CC) $(LDFLAGS) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel -lvc -lamiga $(CFLAGP)$@
+LDFLAGS = -sc -final
+MKLIB	= $(CC) $(LDFLAGS) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel -lvc -lamiga $(CFLAGP)$@ $^
 CCVER	= vbccm68k 2>/dev/null | awk '/vbcc V/ { printf " "$$1" "$$2 } /vbcc code/ { printf " "$$4" "$$5 }'
 endif
+ifeq ($(TARGET),AmigaG)
+CC	= m68k-amigaos-gcc
+CFLAGS	= -g -Wall -Ilibrary -I. -O2 -noixemul
+CFSPEED	= -O2
+LDFLAGS = -noixemul
+MKLIB	= m68k-amigaos-ld $(CFLAGP)$@ $^ -lc --strip-all
+CCVER	= m68k-amigaos-gcc --version | awk '/m68k/ { printf " "$$0 }'
+endif
 ifeq ($(TARGET),AmigaS)
-AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
 CC	= $(VAMOS) sc
 CFLAGS	= Data=FarOnly IdentifierLength=40 IncludeDirectory=library Optimize OptimizerSchedule NoStackCheck NoVersion
 CFSPEED	= OptimizerTime OptimizerComplexity=10 OptimizerInLocal
@@ -46,7 +58,7 @@ CFLAGD	= Define=
 CFLAGO	= ObjectName=
 CFLAGP	= ProgramName=
 LDFLAGS = Link SmallData SmallCode
-MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From
+MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From $^
 CCVER	= $(VAMOS) sc | awk '/^SAS/ { printf " "$$0 }'
 endif
 INTEGRATION_OBJ = archivefs_integration_amiga.o
@@ -83,7 +95,7 @@ $(PROG): $(OBJS_TEST)
 	$(CC) $(LDFLAGS) $(CFLAGP)$@ $^
 
 $(LIB): $(OBJS_LIB)
-	$(MKLIB) $^
+	$(MKLIB)
 
 .date:
 	date "+(%d.%m.%Y)" | xargs printf > $@

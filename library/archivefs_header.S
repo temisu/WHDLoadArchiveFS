@@ -1,6 +1,8 @@
 ; Copyright (C) Teemu Suutari
 
-	SECTION code,CODE
+; section name must be .text to become first with m68k-amigaos-ld
+
+	SECTION .text,CODE
 
 	moveq	#-1,d0
 	rts
