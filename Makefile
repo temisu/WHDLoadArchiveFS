@@ -44,7 +44,7 @@ endif
 ifeq ($(TARGET),AmigaG)
 CC	= m68k-amigaos-gcc
 CFLAGS	= -g -Wall -Ilibrary -I. -O2 -noixemul
-CFSPEED	= -O2
+CFSPEED	= -O3
 LDFLAGS = -noixemul
 MKLIB	= m68k-amigaos-ld $(CFLAGP)$@ $^ -lc --strip-all
 CCVER	= m68k-amigaos-gcc --version | awk '/m68k/ { printf " "$$0 }'

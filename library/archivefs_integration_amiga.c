@@ -30,7 +30,7 @@ void archivefs_integration_initialize()
 	if (!archivefs_integration_initCounter++)
 	{
 		SysBase=(*((struct ExecBase **) 4U));
-		DOSBase=(void*)OpenLibrary("dos.library",37);
+		DOSBase=(struct DosLibrary *)OpenLibrary((unsigned char *)"dos.library",37);
 	}
 #endif
 }
@@ -49,7 +49,7 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 	struct FileInfoBlock fib;
 	BOOL success;
 
-	lock=Lock(filename,ACCESS_READ);
+	lock=Lock((unsigned char *) filename,ACCESS_READ);
 	if (!lock)
 		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
 	success=Examine(lock,&fib);
@@ -59,7 +59,7 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 	if (fib.fib_DirEntryType>0)
 		return ARCHIVEFS_ERROR_INVALID_FILE_TYPE;
 
-	fd=Open(filename,MODE_OLDFILE);
+	fd=Open((unsigned char *) filename,MODE_OLDFILE);
 	if (!fd)
 		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
 	*file=(void*)fd;
