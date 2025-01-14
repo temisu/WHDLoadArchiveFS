@@ -325,7 +325,7 @@ static int archivefs_zipDecompressPartial(struct archivefs_zipDecompressState *s
 #include "archivefs_zip_decompressor_template.h"
 }
 
-int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset)
+int32_t archivefs_zipDecompress(struct archivefs_zipDecompressState *state,uint8_t *dest,int32_t length,uint32_t offset)
 {
 	int ret;
 

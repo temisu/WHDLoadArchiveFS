@@ -76,7 +76,7 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 	return 0;
 }
 
-static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *file_state,uint32_t length,uint32_t offset)
+static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *file_state,int32_t length,uint32_t offset)
 {
 	/* does not check file type */
 	struct archivefs_cached_file_entry *entry;

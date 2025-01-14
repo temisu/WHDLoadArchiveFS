@@ -2,22 +2,68 @@
 
 VPATH	:= library testing
 
-TARGET ?= Amiga
+# possible targets:
+#	Amiga	build with vbcc
+#	AmigaG	build with m68k-amigaos-gcc, requires https://github.com/bebbo/amiga-gcc
+#	AmigaS	build with SAS/C, requires vamos (https://github.com/cnvogelg/amitools) on Linux/MacOS
+#	*	build with clang for testing
+TARGET	?= AmigaG
 
-ifneq ($(TARGET), Amiga)
+# set vamos if cross compile
+ifneq ($(shell uname -s),AmigaOS)
+VAMOS	= vamos -q --
+endif
+
+# because SAS/C has non standard arguments
+CFLAGC	= -c
+CFLAGD	= -D
+CFLAGO	= -o
+CFLAGP	= -o
+
+ifeq (,$(findstring Amiga,$(TARGET)))
+# non Amiga targets
 CC	= clang
 CFLAGS	= -g -Wall -Werror -Ilibrary -I.
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_unix.o
 LIB	=
 else
-AS	= vasmm68k_mot
+# Amiga* targets
+# too lazy to construct AS for gcc/sas
+AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
+ifeq ($(TARGET),Amiga)
 CC	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
-AFLAGS	= -Fhunk -I$(INCLUDEOS3) -quiet
-LDFLAGS = -sc -O2 -final
+CFSPEED	= -speed
+CFLAGO	= -o 
+CFLAGP	= -o 
+LDFLAGS = -sc -final
+MKLIB	= $(CC) $(LDFLAGS) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel -lvc -lamiga $(CFLAGP)$@ $^
+CCVER	= vbccm68k 2>/dev/null | awk '/vbcc V/ { printf " "$$1" "$$2 } /vbcc code/ { printf " "$$4" "$$5 }'
+endif
+ifeq ($(TARGET),AmigaG)
+CC	= m68k-amigaos-gcc
+CFLAGS	= -g -Wall -Ilibrary -I. -O2 -noixemul
+CFSPEED	= -O3
+LDFLAGS = -noixemul
+MKLIB	= m68k-amigaos-ld $(CFLAGP)$@ $^ -lc --strip-all
+CCVER	= m68k-amigaos-gcc --version | awk '/m68k/ { printf " "$$0 }'
+endif
+ifeq ($(TARGET),AmigaS)
+CC	= $(VAMOS) sc
+CFLAGS	= Data=FarOnly IdentifierLength=40 IncludeDirectory=library Optimize OptimizerSchedule NoStackCheck NoVersion
+CFSPEED	= OptimizerTime OptimizerComplexity=10 OptimizerInLocal
+CFLAGC	=
+CFLAGD	= Define=
+CFLAGO	= ObjectName=
+CFLAGP	= ProgramName=
+LDFLAGS = Link SmallData SmallCode
+MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From $^
+CCVER	= $(VAMOS) sc | awk '/^SAS/ { printf " "$$0 }'
+endif
 INTEGRATION_OBJ = archivefs_integration_amiga.o
 LIB	= WHDLoad.VFS
+
 endif
 
 PROG	= test
@@ -34,35 +80,34 @@ obj:
 	mkdir $@
 
 obj/%.o: %.S .date .ccver | obj
-	$(AS) $(AFLAGS) -o $@ $<
+	$(AS) -o $@ $<
 
 obj/archivefs_integration_amiga_standalone.o: archivefs_integration_amiga.c | obj
-	 $(CC) $(CFLAGS) -o $@ -c $< -DARCHIVEFS_STANDALONE=1
+	$(CC) $(CFLAGS) $(CFLAGO)$@ $(CFLAGC) $< $(CFLAGD)ARCHIVEFS_STANDALONE=1
 
-ifeq ($(TARGET), Amiga)
-obj/archivefs_huffman_decoder.o: CFLAGS+=-speed
-obj/archivefs_lha_decompressor.o: CFLAGS+=-speed
-obj/archivefs_zip_decompressor.o: CFLAGS+=-speed
-endif
+obj/archivefs_huffman_decoder.o: CFLAGS+=$(CFSPEED)
+obj/archivefs_lha_decompressor.o: CFLAGS+=$(CFSPEED)
+obj/archivefs_zip_decompressor.o: CFLAGS+=$(CFSPEED)
 obj/%.o: %.c | obj
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(CFLAGO)$@ $(CFLAGC) $<
 
 $(PROG): $(OBJS_TEST)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) $(CFLAGP)$@ $^
 
 $(LIB): $(OBJS_LIB)
-	$(CC) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel $^ -o $@ -lvc -lamiga
+	$(MKLIB)
 
 .date:
 	date "+(%d.%m.%Y)" | xargs printf > $@
 
 .ccver:
-	vbccm68k 2>/dev/null | awk '/vbcc V/ { printf " "$$1" "$$2 } /vbcc code/ { printf " "$$4" "$$5 }' > $@
+	$(CCVER) > $@
 
 .PHONY: all clean .date .ccver
 
 clean:
-	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~ .date .ccver
+	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~ .date .ccver *.lnk
+	test -d obj && rmdir obj || true
 
 run_tests: $(PROG)
 	@./testing/run_test.sh testing/test1.txt

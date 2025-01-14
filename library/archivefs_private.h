@@ -67,7 +67,7 @@ struct archivefs_state
 	
 	/* pointers to the implementation */
 	int (*fileOpen)(struct archivefs_file_state*,struct archivefs_cached_file_entry*);
-	int32_t (*fileRead)(void *dest,struct archivefs_file_state *,uint32_t,uint32_t);
+	int32_t (*fileRead)(void *dest,struct archivefs_file_state *,int32_t,uint32_t);
 	int (*uninitialize)(struct archivefs_state*);
 
 	/* Progress indicator */

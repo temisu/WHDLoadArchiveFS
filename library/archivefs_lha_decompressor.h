@@ -48,6 +48,6 @@ struct archivefs_lhaDecompressState
 
 struct archivefs_lhaDecompressState *archivefs_lhaAllocateDecompressState(int hasLH1,int hasLH45,int hasLH6);
 void archivefs_lhaDecompressInitialize(struct archivefs_lhaDecompressState *state,struct archivefs_state *archive,uint32_t fileOffset,uint32_t fileLength,uint32_t rawLength,uint32_t method);
-int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,uint32_t length,uint32_t offset);
+int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8_t *dest,int32_t length,uint32_t offset);
 
 #endif

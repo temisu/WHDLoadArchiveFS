@@ -26,7 +26,7 @@ struct FIB
 	uint16_t				gid;
 };
 
-static const char protectionLetters[8]="dewrapsh";
+static const char protectionLetters[]="dewrapsh";
 static const char *monthNames[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
 static void printFIB(const struct FIB *fib)
@@ -170,7 +170,7 @@ int main(int argc,char **argv)
 				}
 				archivefs_free(verify);
 			}
-			if ((uint32_t)(allocatedFiles[i])!=0x80000000U) archivefs_free(allocatedFiles[i]);
+			if (((size_t)allocatedFiles[i])!=0x80000000U) archivefs_free(allocatedFiles[i]);
 		}
 		printf("----------------------------------------------------------------------------\n");
 	} else if (!strcmp(argv[1],"examine")) {
@@ -247,7 +247,7 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		for (i=0;i<allocatedFileCount;i++)
-			if ((uint32_t)(allocatedFiles[i])!=0x80000000U) archivefs_free(allocatedFiles[i]);
+			if ((size_t)(allocatedFiles[i])!=0x80000000U) archivefs_free(allocatedFiles[i]);
 	} else {
 		return -1;
 	}

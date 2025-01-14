@@ -21,8 +21,8 @@ void archivefs_free(void *ptr);
 /*
    Initialize and uninitialize platform
 */
-void archivefs_integration_initialize();
-void archivefs_integration_uninitialize();
+void archivefs_integration_initialize(void);
+void archivefs_integration_uninitialize(void);
 
 
 /*

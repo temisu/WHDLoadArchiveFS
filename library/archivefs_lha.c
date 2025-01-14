@@ -47,12 +47,13 @@
    Rather complex due to intertwined logic of different levels which still share quite a lot of common, but with quirks...
    In theory should read non-Amiga archives with good success, but this is not a priority
 */
-static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,struct archivefs_state *archive,uint32_t offset)
+static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,struct archivefs_state *archive,int32_t offset)
 {
 	int ret;
 	uint8_t hdr[HDR_L2_SIZE];
-	uint32_t hdrSize,packedLength,rawLength,mtime,attributes,level;
-	uint32_t extraLength,maxExtraOffset,pathOffset,pathLength,nameOffset,nameLength,noteOffset,noteLength,dataType,i;
+	int32_t packedLength;
+	uint32_t hdrSize=0,rawLength,mtime,attributes=0,level;
+	uint32_t extraLength,maxExtraOffset,pathOffset,pathLength,nameOffset=0,nameLength=0,noteOffset,noteLength,dataType,i;
 	int isAmiga,isDir;
 	struct archivefs_cached_file_entry *entry;
 	uint8_t *stringSpace;
@@ -317,7 +318,6 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		{
 			if (stringSpace[pathLength-1]=='/') break;
 			pathLength--;
-			nameLength++;
 		}
 	}
 
@@ -369,7 +369,7 @@ static int archivefs_lha_fileOpen(struct archivefs_file_state *file_state,struct
 	return 0;
 }
 
-static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *file_state,uint32_t length,uint32_t offset)
+static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *file_state,int32_t length,uint32_t offset)
 {
 	/* does not check file type */
 	const struct archivefs_cached_file_entry *entry;
