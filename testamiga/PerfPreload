@@ -17,31 +17,46 @@ if not exists $DATA
 endif
 
 if not exists $DATA.xpk
+	echo "creating $DATA.xpk ..."
 	copy $DATA $DATA.xpk clone all
 	xpackbest $DATA.xpk mash.100 sqsh.100
 endif
 
+set LHA="lha -eNrZ"
 if not exists $DATA.0.lha
-	lha -aerZF -z a $DATA.0.lha $DATA
+	echo "creating $DATA.0.lha ..."
+	$LHA -z a $DATA.0.lha $DATA/ `ls $DATA`
 endif
 ;if not exists $DATA.1.lha
-;	lha -aerZF -0 a $DATA.1.lha $DATA
+;	echo "creating $DATA.1.lha ..."
+;	$LHA -0 a $DATA.1.lha $DATA/ `ls $DATA`
 ;endif
 if not exists $DATA.5.lha
-	lha -aerZF -2 a $DATA.5.lha $DATA
+	echo "creating $DATA.5.lha ..."
+	$LHA -2 a $DATA.5.lha $DATA/ `ls $DATA`
 endif
 if not exists $DATA.6.lha
-	lha -aerZF -3 a $DATA.6.lha $DATA
+	echo "creating $DATA.6.lha ..."
+	$LHA -3 a $DATA.6.lha $DATA/ `ls $DATA`
 endif
 
 if not exists $DATA.0.zip
-	zip -r0N $DATA.0.zip $DATA
+	echo "creating $DATA.0.zip ..."
+	cd $DATA
+	zip -r0N /$DATA.0.zip *
+	cd /
 endif
 if not exists $DATA.1.zip
-	zip -r1N $DATA.1.zip $DATA
+	echo "creating $DATA.1.zip ..."
+	cd $DATA
+	zip -r1N /$DATA.1.zip *
+	cd /
 endif
 if not exists $DATA.9.zip
-	zip -r9N $DATA.9.zip $DATA
+	echo "creating $DATA.9.zip ..."
+	cd $DATA
+	zip -r9N /$DATA.9.zip *
+	cd /
 endif
 
 du -sb $DATA >T:du
@@ -51,7 +66,7 @@ du -sb $DATA.xpk
 list #?.lha sort=n lformat="%l %s"
 list #?.zip sort=n lformat="%l %s"
 
-set WHD "WHDLoadPP [Slave] NoReq SplashDelay=1 Preload PreloadSize=$PS [WHDLoadOptions] Data"
+set WHD "WHDLoadPP [Slave] NoReq SplashDelay=1 Preload PreloadSize=$PS ExecuteStartup=*"*" ExecuteCleanup=*"*" NoNetwork [WHDLoadOptions] Data"
 echo "Command=$WHD"
 FailAt 20
 

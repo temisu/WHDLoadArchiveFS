@@ -1,6 +1,6 @@
 
 CSPPC/68060@60, IBM-DNES-318350W
-OS 3.1.4.1 SFS 1.279
+OS 3.2.2.1 SFS 1.279 200 Buffers
 XPK: xpackbest mash.100 sqsh.100
 
 BeneathASteelSkyCD32
@@ -8,13 +8,12 @@ BeneathASteelSkyCD32
 5039 files
 90459801 data-cd32
 58254483 data-cd32.xpk
-90727466 data-cd32.0.lha
-67475658 data-cd32.1.lha
-66901471 data-cd32.5.lha
-66962830 data-cd32.6.lha
-91136817 data-cd32.0.zip
-68301169 data-cd32.1.zip
-67191970 data-cd32.9.zip
+90677068 data-cd32.0.lha
+66851073 data-cd32.5.lha
+66912432 data-cd32.6.lha
+91035583 data-cd32.0.zip
+68199935 data-cd32.1.zip
+67090736 data-cd32.9.zip
 
 plain init 0.00 dircache 16.80 filecache 19.82 sum 36.62 ()
 xpk   init 0.00 dircache 14.98 filecache 45.94 sum 60.92 ()
@@ -25,18 +24,45 @@ zip-0 init 0.48 dircache 3.82 filecache 18.56 sum 22.86 (ArchiveFS 1.02 beta)
 zip-1 init 0.46 dircache 3.82 filecache 251.14 sum 255.42 (ArchiveFS 1.02 beta)
 zip-9 init 0.50 dircache 4.48 filecache 242.90
 
+plain init 0.00 dircache 20.08 filecache  21.80 sum  41.88 ()
+xpk   init 0.00 dircache 19.10 filecache  49.50 sum  68.60 ()
+lha-0 init 9.78 dircache  3.90 filecache  19.76 sum  33.44 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-5 init 8.12 dircache  3.90 filecache 202.94 sum 214.96 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-6 init 8.16 dircache  3.90 filecache 202.00 sum 214.06 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-0 init 0.66 dircache  3.90 filecache  19.24 sum  23.80 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-1 init 0.70 dircache  3.90 filecache 237.46 sum 242.06 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-9 init 0.78 dircache  3.90 filecache 234.76 sum 239.44 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+
+plain init 0.00 dircache 19.72 filecache  21.48 sum  41.20 ()
+xpk   init 0.00 dircache 18.56 filecache  48.10 sum  66.66 ()
+lha-0 init 9.66 dircache  3.90 filecache  19.54 sum  33.10 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-5 init 7.94 dircache  3.90 filecache 245.32 sum 257.16 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-6 init 7.92 dircache  3.90 filecache 240.74 sum 252.56 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-0 init 0.62 dircache  3.92 filecache  19.02 sum  23.56 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-1 init 0.64 dircache  3.90 filecache 284.58 sum 289.12 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-9 init 0.74 dircache  4.56 filecache 274.70 sum 280.00 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+
+plain init 0.00 dircache 20.26 filecache  21.90 sum  42.16 ()
+xpk   init 0.00 dircache 18.84 filecache  48.66 sum  67.50 ()
+lha-0 init 9.62 dircache  3.90 filecache  19.60 sum  33.12 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 7.96 dircache  3.88 filecache 179.92 sum 191.76 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 7.92 dircache  3.88 filecache 177.44 sum 189.24 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.76 dircache  3.88 filecache  20.50 sum  25.14 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.62 dircache  3.90 filecache 206.38 sum 210.90 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.66 dircache  3.88 filecache 205.88 sum 210.42 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+
+
 SpaceAce2
 ---------
 6 files
 5121056 data-pal
-3840256 data-pal.xpk
-5120341 data-pal.0.lha
-3938178 data-pal.1.lha
-3679807 data-pal.5.lha
-3638673 data-pal.6.lha
-5120926 data-pal.0.zip
-3757766 data-pal.1.zip
-3644878 data-pal.9.zip
+3840288 data-pal.xpk
+5120239 data-pal.0.lha
+3679705 data-pal.5.lha
+3638571 data-pal.6.lha
+5120706 data-pal.0.zip
+3757546 data-pal.1.zip
+3644658 data-pal.9.zip
 
 plain init 0.00 dircache 0.00 filecache 0.40 sum 0.40 ()
 xpk   init 0.00 dircache 0.00 filecache 2.02 sum 2.02 ()
@@ -47,17 +73,45 @@ zip-0 init 0.02 dircache 0.00 filecache 0.44 sum 0.46 (ArchiveFS 1.02 beta)
 zip-1 init 0.04 dircache 0.00 filecache 13.32 sum 13.36 (ArchiveFS 1.02 beta)
 zip-9 init 0.02 dircache 0.00 filecache 12.96 sum 12.98 (ArchiveFS 1.02 beta)
 
+plain init 0.02 dircache  0.00 filecache   0.40 sum   0.42 ()
+xpk   init 0.00 dircache  0.00 filecache   2.08 sum   2.08 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.36 sum   0.42 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-5 init 0.06 dircache  0.00 filecache  11.56 sum  11.62 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-6 init 0.06 dircache  0.00 filecache  11.18 sum  11.24 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-0 init 0.04 dircache  0.00 filecache   0.40 sum   0.44 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-1 init 0.02 dircache  0.00 filecache  13.04 sum  13.06 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-9 init 0.04 dircache  0.00 filecache  12.70 sum  12.74 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+
+plain init 0.00 dircache  0.00 filecache   0.38 sum   0.38 ()
+xpk   init 0.00 dircache  0.00 filecache   2.06 sum   2.06 ()
+lha-0 init 0.04 dircache  0.00 filecache   0.38 sum   0.42 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-5 init 0.06 dircache  0.00 filecache  13.18 sum  13.24 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-6 init 0.08 dircache  0.00 filecache  12.64 sum  12.72 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-0 init 0.04 dircache  0.00 filecache   0.42 sum   0.46 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-1 init 0.04 dircache  0.00 filecache  15.16 sum  15.20 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-9 init 0.04 dircache  0.00 filecache  14.84 sum  14.88 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+
+plain init 0.00 dircache  0.00 filecache   0.38 sum   0.38 ()
+xpk   init 0.00 dircache  0.00 filecache   2.06 sum   2.06 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.08 dircache  0.00 filecache  10.08 sum  10.16 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   9.76 sum   9.82 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.02 dircache  0.00 filecache  11.30 sum  11.32 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  11.00 sum  11.02 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+
+
 Workbench31
 -----------
 567 files
 3075621 data
 1890696 data.xpk
-3019804 data.0.lha
-1736387 data.5.lha
-1707204 data.6.lha
-3082551 data.0.zip
-1831933 data.1.zip
-1763587 data.9.zip
+3016897 data.0.lha
+1733480 data.5.lha
+1704297 data.6.lha
+3075947 data.0.zip
+1825329 data.1.zip
+1756983 data.9.zip
 
 plain init 0.00 dircache 1.02 filecache 1.30 sum 2.32 ()
 xpk   init 0.02 dircache 1.16 filecache 2.64 sum 3.82 ()
@@ -67,4 +121,31 @@ lha-6 init 0.44 dircache 0.06 filecache 5.96 sum 6.46 (ArchiveFS 1.02 beta)
 zip-0 init 0.14 dircache 0.04 filecache 0.90 sum 1.08 (ArchiveFS 1.02 beta)
 zip-1 init 0.14 dircache 0.04 filecache 7.32 sum 7.50 (ArchiveFS 1.02 beta)
 zip-9 init 0.14 dircache 0.04 filecache 7.06 sum 7.24 (ArchiveFS 1.02 beta)
+
+plain init 0.00 dircache  1.06 filecache   1.40 sum   2.46 ()
+xpk   init 0.02 dircache  1.24 filecache   2.76 sum   4.02 ()
+lha-0 init 0.70 dircache  0.04 filecache   0.92 sum   1.66 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-5 init 0.52 dircache  0.06 filecache   6.22 sum   6.80 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+lha-6 init 0.56 dircache  0.04 filecache   6.08 sum   6.68 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-0 init 0.22 dircache  0.04 filecache   0.96 sum   1.22 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-1 init 0.24 dircache  0.04 filecache   7.08 sum   7.36 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+zip-9 init 0.22 dircache  0.04 filecache   6.84 sum   7.10 (ArchiveFS 1.3 (05.01.2025) vbcc V0.9h m68k/ColdFire V1.15)
+
+plain init 0.00 dircache  1.16 filecache   1.52 sum   2.68 ()
+xpk   init 0.02 dircache  1.38 filecache   2.96 sum   4.36 ()
+lha-0 init 0.56 dircache  0.06 filecache   0.88 sum   1.50 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-5 init 0.42 dircache  0.04 filecache   7.06 sum   7.52 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+lha-6 init 0.46 dircache  0.04 filecache   6.92 sum   7.42 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-0 init 0.12 dircache  0.04 filecache   0.98 sum   1.14 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-1 init 0.12 dircache  0.04 filecache   8.18 sum   8.34 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+zip-9 init 0.12 dircache  0.02 filecache   7.96 sum   8.10 (ArchiveFS 1.3 (06.01.2025) SAS/C Amiga Compiler 6.59)
+
+plain init 0.00 dircache  1.22 filecache   1.60 sum   2.82 ()
+xpk   init 0.02 dircache  1.46 filecache   3.02 sum   4.50 ()
+lha-0 init 0.60 dircache  0.04 filecache   0.92 sum   1.56 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.44 dircache  0.04 filecache   5.34 sum   5.82 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.46 dircache  0.04 filecache   5.26 sum   5.76 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.10 dircache  0.02 filecache   0.86 sum   0.98 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.10 dircache  0.02 filecache   6.12 sum   6.24 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.12 dircache  0.02 filecache   5.90 sum   6.04 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 
