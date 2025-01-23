@@ -143,7 +143,7 @@ int main(int argc,char **argv)
 		printf("----------------------------------------------------------------------------\n");
 		printf("FileCache:\n");
 		ret=archivefs_fileCache(archive,test_allocFunc);
-		if (ret && ret!=ARCHIVEFS_ERROR_OPERATION_CANCELED)
+		if (ret && ret!=WVFS_ERROR_OPERATION_CANCELED)
 		{
 			printf("archivefs_fileCache failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 			return 0;
@@ -177,7 +177,7 @@ int main(int argc,char **argv)
 		printf("----------------------------------------------------------------------------\n");
 		printf("Examine:\n");
 		ret=archivefs_dirCache(archive,test_registerFunc);
-		if (ret && ret!=ARCHIVEFS_ERROR_OPERATION_CANCELED)
+		if (ret && ret!=WVFS_ERROR_OPERATION_CANCELED)
 		{
 			printf("archivefs_dirCache failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
 			return 0;

@@ -111,7 +111,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 			nlen|=((uint16_t)tmp)<<8U;
 			nlen=~nlen;
 			if (len!=nlen)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 			state->bitsLeft=0;
 			return len;
 		}
@@ -142,7 +142,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 
 			archivefs_zipReadBits(symbolCount,5U);
 			symbolCount+=257U;
-			if (symbolCount>=287U) return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+			if (symbolCount>=287U) return WVFS_ERROR_DECOMPRESSION_ERROR;
 			archivefs_zipReadBits(distanceCount,5U);
 			distanceCount++;
 			archivefs_zipReadBits(tableLength,4U);
@@ -166,11 +166,11 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 				switch (tmp)
 				{
 					case 16:
-					if (!i) return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+					if (!i) return WVFS_ERROR_DECOMPRESSION_ERROR;
 					archivefs_zipReadBits(tmp,2U);
 					tmp+=i+3U;
 					if (tmp>symbolCount+distanceCount)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 					for (;i<tmp;i++)
 						lengthTable[i]=lengthTable[i-1];
 					break;
@@ -179,7 +179,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 					archivefs_zipReadBits(tmp,3U);
 					tmp+=i+3U;
 					if (tmp>symbolCount+distanceCount)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 					for (;i<tmp;i++)
 						lengthTable[i]=0;
 					break;
@@ -188,7 +188,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 					archivefs_zipReadBits(tmp,7U);
 					tmp+=i+11U;
 					if (tmp>symbolCount+distanceCount)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 					for (;i<tmp;i++)
 						lengthTable[i]=0;
 					break;
@@ -206,7 +206,7 @@ static int32_t archivefs_zipInitializeBlock(struct archivefs_zipDecompressState 
 		return 1;
 
 		default:
-		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		return WVFS_ERROR_DECOMPRESSION_ERROR;
 	}
 }
 
@@ -249,7 +249,7 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 		if (!blockLength)
 		{
 			if (final)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 			archivefs_zipReadBits(final,1U);
 			state->bitsLeft=bitsLeft;
 			state->accumulator=accumulator;
@@ -264,7 +264,7 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 			uint8_t *buffer;
 
 			if (pos+blockLength>length)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 			while (bufLength)
 			{
@@ -292,13 +292,13 @@ static int archivefs_zipDecompressFull(struct archivefs_zipDecompressState *stat
 					archivefs_zipReadBits(count,archivefs_zip_LengthBits[symbol]);
 					count+=archivefs_zipLengthAdditions[symbol];
 					if (pos+count>length)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 					archivefs_zipHuffmanDecode(code,state->distanceTree);
 					archivefs_zipReadBits(distance,archivefs_zipDistanceBits[code]);
 					distance+=archivefs_zipDistanceAdditions[code];
 					if (distance>pos)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 					while (count--)
 					{

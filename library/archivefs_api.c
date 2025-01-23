@@ -104,7 +104,7 @@ int archivefs_initialize(void **_archive,const char *filename)
 		archivefs_integration_fileClose(combinedState->archive.file);
 		archivefs_integration_uninitialize();
 		*_archive=0;
-		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+		return WVFS_ERROR_MEMORY_ALLOCATION_FAILED;
 	}
 
 	combinedState->archive.file=file;
@@ -179,9 +179,9 @@ uint32_t archivefs_getFileSize(void *_archive,const char *name)
 
 	entry=archivefs_findEntry(archive,name);
 	if (!entry)
-		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+		return WVFS_ERROR_FILE_NOT_FOUND;
 	if (entry->fileType!=ARCHIVEFS_TYPE_FILE)
-		return ARCHIVEFS_ERROR_INVALID_FILE_TYPE;
+		return WVFS_ERROR_INVALID_FILE_TYPE;
 	return entry->length;
 }
 
@@ -200,7 +200,7 @@ int archivefs_fileCache(void *_archive,archivefs_allocFile fileFunc)
 		if (tmp->fileType==ARCHIVEFS_TYPE_FILE)
 		{
 			ptr=fileFunc(tmp->pathAndName,tmp->length);
-			if (!ptr) return ARCHIVEFS_ERROR_OPERATION_CANCELED;
+			if (!ptr) return WVFS_ERROR_OPERATION_CANCELED;
 			if (((long)ptr)!=-1)
 			{
 				ret=archivefs_fileReadRaw(combined,ptr,tmp,tmp->length,0,1);
@@ -226,7 +226,7 @@ int archivefs_dirCache(void *_archive,archivefs_registerEntry registerFunc)
 	{
 		archivefs_createFIB(&fib,tmp);
 		ret=registerFunc(tmp->pathAndName,&fib);
-		if (!ret) return ARCHIVEFS_ERROR_OPERATION_CANCELED;
+		if (!ret) return WVFS_ERROR_OPERATION_CANCELED;
 		tmp=tmp->next;
 	}
 	return 0;
@@ -246,9 +246,9 @@ int32_t archivefs_fileRead(void *_archive,void *dest,const char *name,uint32_t l
 	{
 		entry=archivefs_findEntry(archive,name);
 		if (!entry)
-			return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+			return WVFS_ERROR_FILE_NOT_FOUND;
 		if (entry->fileType!=ARCHIVEFS_TYPE_FILE)
-			return ARCHIVEFS_ERROR_INVALID_FILE_TYPE;
+			return WVFS_ERROR_INVALID_FILE_TYPE;
 	} else {
 		entry=combined->currentFile;
 	}

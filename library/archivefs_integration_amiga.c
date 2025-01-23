@@ -1,11 +1,11 @@
 /* Copyright (C) Teemu Suutari */
 
-#include "archivefs_integration.h"
-
 #include <exec/memory.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <stdlib.h>
+
+#include "archivefs_integration.h"
 
 #ifdef ARCHIVEFS_STANDALONE
 struct ExecBase *SysBase=0;
@@ -51,17 +51,17 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 
 	lock=Lock((unsigned char *) filename,ACCESS_READ);
 	if (!lock)
-		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+		return WVFS_ERROR_FILE_NOT_FOUND;
 	success=Examine(lock,&fib);
 	UnLock(lock);
 	if (!success)
-		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+		return WVFS_ERROR_FILE_NOT_FOUND;
 	if (fib.fib_DirEntryType>0)
-		return ARCHIVEFS_ERROR_INVALID_FILE_TYPE;
+		return WVFS_ERROR_INVALID_FILE_TYPE;
 
 	fd=Open((unsigned char *) filename,MODE_OLDFILE);
 	if (!fd)
-		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+		return WVFS_ERROR_FILE_NOT_FOUND;
 	*file=(void*)fd;
 	*length=fib.fib_Size;
 	/* TODO: real block size */
@@ -87,7 +87,7 @@ int32_t archivefs_integration_fileRead(void *dest,uint32_t length,void *file)
 
 	ret=Read((BPTR)file,dest,length);
 	if (ret<0)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	return ret;
 }
 

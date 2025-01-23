@@ -39,14 +39,14 @@ int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLength
 	{
 		uint8_t length=bitLengths[i];
 		if (length>32U)
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+			return WVFS_ERROR_DECOMPRESSION_ERROR;
 		if (length)
 		{
 			if (length<minDepth) minDepth=length;
 			if (length>maxDepth) maxDepth=length;
 		}
 	}
-	if (!maxDepth) return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+	if (!maxDepth) return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 	for (depth=minDepth;depth<=maxDepth;depth++)
 	{
@@ -55,7 +55,7 @@ int archivefs_HuffmanCreateOrderlyTable(uint16_t *nodes,const uint8_t *bitLength
 			if (bitLengths[i]==depth)
 			{
 				if (!(nodeCount=archivefs_HuffmanInsert(nodes,nodeCount,depth,code>>(maxDepth-depth),i)))
-					return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+					return WVFS_ERROR_DECOMPRESSION_ERROR;
 				code+=1U<<(maxDepth-depth);
 			}
 		}
