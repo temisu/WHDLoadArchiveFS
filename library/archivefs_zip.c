@@ -58,10 +58,10 @@ static int archivefs_zip_fileOpen(struct archivefs_file_state *file_state,struct
 		if ((ret=archivefs_common_read(hdr,HDR_LFH_SIZE,entry->dataOffset,archive))<0) return ret;
 		/* lets keep it minimal */
 		if (GET_LE32(hdr)!=0x4034b50U)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		lfhLength=HDR_LFH_SIZE+GET_LE16(hdr+HDR_LFH_OFFSET_NAMELENGTH)+GET_LE16(hdr+HDR_LFH_OFFSET_EXTRALENGTH);
 		if (entry->dataOffset+lfhLength+entry->dataLength>=archive->fileLength)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		/*
 		   now do fixup: since the offset were wrong earlier there is probably -1/+1 error on the block count
 		   this is why we do +1 for to block count when adding the entry
@@ -87,7 +87,7 @@ static int32_t archivefs_zip_fileRead(void *dest,struct archivefs_file_state *fi
 
 	entry=file_state->state.zip.entry;
 	if (length+offset>entry->length)
-		return ARCHIVEFS_ERROR_INVALID_READ;
+		return WVFS_ERROR_INVALID_READ;
 	if (entry->dataType)
 	{
 		if (!file_state->state.zip.decompressState)
@@ -128,7 +128,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 
 	/* First thing first: Find end of central directory */
 	if (archive->fileLength<HDR_EOCD_SIZE)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	if ((ret=archivefs_common_read(hdr,HDR_EOCD_SIZE,archive->fileLength-HDR_EOCD_SIZE,archive))<0) return ret;
 	for (i=0;i<65536U;i++)
 	{
@@ -136,51 +136,51 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 			break;
 		/* Read new content byte by byte, this is the slow bit (but practically really rare) */
 		if (i+1>archive->fileLength-HDR_EOCD_SIZE)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		for (j=HDR_EOCD_SIZE-1;j;j--)
 			hdr[j]=hdr[j-1];
 		if ((ret=archivefs_common_read(hdr,1,archive->fileLength-HDR_EOCD_SIZE-i-1,archive))<0) return ret;
 	}
 	if (i==65536U)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 
 	if (GET_LE16(hdr+HDR_EOCD_OFFSET_DISKNO))
-		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+		return WVFS_ERROR_UNSUPPORTED_FORMAT;
 	if (GET_LE16(hdr+HDR_EOCD_OFFSET_DISKNO))
-		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+		return WVFS_ERROR_UNSUPPORTED_FORMAT;
 	numEntries=GET_LE16(hdr+HDR_EOCD_OFFSET_NUMENTRIES);
 	if (numEntries!=GET_LE16(hdr+HDR_EOCD_OFFSET_NUMENTRIES_DISK))
-		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+		return WVFS_ERROR_UNSUPPORTED_FORMAT;
 	cdLength=GET_LE32(hdr+HDR_EOCD_OFFSET_CDLENGTH);
 	cdOffset=GET_LE32(hdr+HDR_EOCD_OFFSET_CDOFFSET);
 	if (cdOffset+cdLength>archive->fileLength)
-		 return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		 return WVFS_ERROR_INVALID_FORMAT;
 
 	for (i=0;i<numEntries;i++)
 	{
 		if ((ret=archivefs_common_read(hdr,HDR_CFH_SIZE,cdOffset,archive))<0) return ret;
 		if (GET_LE32(hdr)!=0x2014b50U)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		/* patching, encryption */
 		if (hdr[HDR_CFH_OFFSET_FLAGS]&0x61U)
-			return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+			return WVFS_ERROR_UNSUPPORTED_FORMAT;
 		/* not a bug: OS is defined in the high (LSB) byte of create version */
 		isAmiga=hdr[HDR_CFH_OFFSET_CREATE_VERSION+1]==1;
 #ifndef ARCHIVEFS_ALLOW_NON_AMIGA_ARCHIVES
 		if (!isAmiga)
-			return ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE;
+			return WVFS_ERROR_NON_AMIGA_ARCHIVE;
 #endif
 		dataType=GET_LE16(hdr+HDR_CFH_OFFSET_METHOD);
 		if (dataType)
 		{
 			if (dataType!=8)
-				return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+				return WVFS_ERROR_UNSUPPORTED_FORMAT;
 			dataType=1;
 		}
 		if (dataType) usesCompression=1;
 
 		if (GET_LE16(hdr+HDR_CFH_OFFSET_DISK_NUMBER_START))
-			 return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			 return WVFS_ERROR_INVALID_FORMAT;
 
 		mtime=GET_LE32(hdr+HDR_CFH_OFFSET_MTIME);
 		packedLength=GET_LE32(hdr+HDR_CFH_OFFSET_PACKEDSIZE);
@@ -199,7 +199,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 		offset=GET_LE32(hdr+HDR_CFH_OFFSET_LOCAL_HEADER_OFFSET);
 		cfhLength=HDR_CFH_SIZE+nameLength+extraLength+commentLength;
 		if (cfhLength>cdLength)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 
 		/* Mark that we need to parse the LFH when opening the file
 		   for the first time
@@ -212,7 +212,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 
 		entry=archivefs_malloc(sizeof(struct archivefs_cached_file_entry)+nameLength*2+commentLength+3);
 		if (!entry)
-			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+			return WVFS_ERROR_MEMORY_ALLOCATION_FAILED;
 		entry->prev=0;
 		entry->next=0;
 		stringSpace=(void*)(entry+1);
@@ -294,7 +294,7 @@ int archivefs_zip_initialize(struct archivefs_state *archive)
 	{
 		archive->state.zip.decompressState=archivefs_malloc(sizeof(struct archivefs_zipDecompressState));
 		if (!archive->state.zip.decompressState)
-			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+			return WVFS_ERROR_MEMORY_ALLOCATION_FAILED;
 	}
 	return 0;
 }

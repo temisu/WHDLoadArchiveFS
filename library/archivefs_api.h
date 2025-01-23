@@ -3,6 +3,15 @@
 #ifndef ARCHIVEFS_API_H
 #define ARCHIVEFS_API_H
 
+#ifndef EXEC_TYPES_H
+#define EXEC_TYPES_H
+typedef int LONG;
+typedef unsigned int ULONG;
+typedef void * APTR;
+typedef char * CPTR;
+#endif
+
+#include "whdvfs.h"
 
 /*
    in order not to depend on any external headers
@@ -37,19 +46,6 @@ typedef signed char int8_t;
 #define ARCHIVEFS_ALLOW_NON_AMIGA_ARCHIVES 1
 */
 
-/*
-   Error codes returned by the archivefs_* functions
-*/
-#define ARCHIVEFS_ERROR_INVALID_FORMAT (-1)
-#define ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT (-2)
-#define ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED (-3)
-#define ARCHIVEFS_ERROR_FILE_NOT_FOUND (-4)
-#define ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE (-5)
-#define ARCHIVEFS_ERROR_INVALID_FILE_TYPE (-6)
-#define ARCHIVEFS_ERROR_DECOMPRESSION_ERROR (-7)
-#define ARCHIVEFS_ERROR_INVALID_READ (-8)
-#define ARCHIVEFS_ERROR_OPERATION_CANCELED (-9)
-
 /* callback functions for the API */
 
 /*
@@ -58,7 +54,7 @@ typedef signed char int8_t;
 	* name - name of the file, including path
 	* length - length of the file
    Returns:
-	* null - when no more files are wanted. i.e. terminate the archivefs_fileCache. fileCache will return with ARCHIVEFS_ERROR_OPERATION_CANCELED error
+	* null - when no more files are wanted. i.e. terminate the archivefs_fileCache. fileCache will return with WVFS_ERROR_OPERATION_CANCELED error
 	* -1 casted as void* - skip this file
 	* any other pointer - allocated buffer of at least file length where the file is requested to read into
 */
@@ -70,7 +66,7 @@ typedef void *(*archivefs_allocFile)(const char *name,uint32_t length);
 	* fullpath - path and filename of the file
 	* fib - pointer to the 232-byte fib structure for the entry
    Returns:
-	* 0 - stop processing further entries. dirCache will return with ARCHIVEFS_ERROR_OPERATION_CANCELED error
+	* 0 - stop processing further entries. dirCache will return with WVFS_ERROR_OPERATION_CANCELED error
 	* -1 (or any nonzero value) - continue processing
 */
 typedef int (*archivefs_registerEntry)(const char *fullpath,const void *fib);
@@ -88,10 +84,10 @@ typedef void (*archivefs_progressIndicator)(uint32_t current,uint32_t max);
 	* error code or 0 if success. In case error occured all allocated memory is freed
    Notable error codes:
 	* Pass through errors from archivefs_integration
-	* ARCHIVEFS_ERROR_INVALID_FORMAT - file could not be parsed
-	* ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT - file format not supported
-	* ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
-	* ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
+	* WVFS_ERROR_INVALID_FORMAT - file could not be parsed
+	* WVFS_ERROR_UNSUPPORTED_FORMAT - file format not supported
+	* WVFS_ERROR_MEMORY_ALLOCATION_FAILED - Failed to allocate memory
+	* WVFS_ERROR_NON_AMIGA_ARCHIVE - Archive is not created in Amiga OS
 */
 int archivefs_initialize(void **archive,const char *filename);
 
@@ -114,8 +110,8 @@ int archivefs_uninitialize(void *archive);
    Returns:
 	* error code or file size if success
    Notable error codes:
-	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
-	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
+	* WVFS_ERROR_FILE_NOT_FOUND - file does not exist
+	* WVFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
 */
 uint32_t archivefs_getFileSize(void *archive,const char *name);
 
@@ -131,9 +127,9 @@ uint32_t archivefs_getFileSize(void *archive,const char *name);
 	* error code or 0 if success. If error is returned, the last file might not have been read to the buffer
    Notable error codes:
 	* Pass through errors from archivefs_integration
-	* ARCHIVEFS_ERROR_INVALID_FORMAT - file could not be parsed
-	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
-	* ARCHIVEFS_ERROR_OPERATION_CANCELED - callback returned stop condition
+	* WVFS_ERROR_INVALID_FORMAT - file could not be parsed
+	* WVFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* WVFS_ERROR_OPERATION_CANCELED - callback returned stop condition
 */
 int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
 
@@ -146,7 +142,7 @@ int archivefs_fileCache(void *archive,archivefs_allocFile fileFunc);
    Returns:
 	* error code or 0 if success.
    Notable error codes:
-	* ARCHIVEFS_ERROR_OPERATION_CANCELED - callback returned stop condition
+	* WVFS_ERROR_OPERATION_CANCELED - callback returned stop condition
 */
 int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
 
@@ -163,10 +159,10 @@ int archivefs_dirCache(void *archive,archivefs_registerEntry registerFunc);
 	* error code or bytes read if success.
    Notable error codes:
 	* Pass through errors from archivefs_integration
-	* ARCHIVEFS_ERROR_FILE_NOT_FOUND - file does not exist
-	* ARCHIVEFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
-	* ARCHIVEFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
-	* ARCHIVEFS_ERROR_INVALID_READ - offset and/or length is not valid for this file
+	* WVFS_ERROR_FILE_NOT_FOUND - file does not exist
+	* WVFS_ERROR_INVALID_FILE_TYPE - filename points to non-file (f.e. directory)
+	* WVFS_ERROR_DECOMPRESSION_ERROR - failed to decompress the file
+	* WVFS_ERROR_INVALID_READ - offset and/or length is not valid for this file
 */
 int32_t archivefs_fileRead(void *archive,void *dest,const char *name,uint32_t length,uint32_t offset);
 

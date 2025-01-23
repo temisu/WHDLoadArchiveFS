@@ -34,15 +34,15 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 
 	fd=open(filename,O_RDONLY);
 	if (fd<0)
-		return ARCHIVEFS_ERROR_FILE_NOT_FOUND;
+		return WVFS_ERROR_FILE_NOT_FOUND;
 	l=lseek(fd,0,SEEK_END);
 	if (l<0)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	*length=l;
 	*blockShift=9U;
 	l=lseek(fd,0,SEEK_SET);
 	if (l<0)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	*file=(void*)(size_t)fd;
 	return 0;
 }
@@ -58,7 +58,7 @@ int archivefs_integration_fileSeek(uint32_t offset,void *file)
 	int fd=(size_t)file;
 	int ret=lseek(fd,offset,SEEK_SET);
 	if (ret<0)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	return 0;
 }
 
@@ -67,7 +67,7 @@ int32_t archivefs_integration_fileRead(void *dest,uint32_t length,void *file)
 	int fd=(size_t)file;
  	int ret=read(fd,dest,length);
 	if (ret<0)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
  	return ret;
 }
 

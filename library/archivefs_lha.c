@@ -64,12 +64,12 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	/* Basic stuff */
 	level=hdr[HDR_L0_OFFSET_LEVEL];
 	if (level>2)
-		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+		return WVFS_ERROR_UNSUPPORTED_FORMAT;
 	if (level==2)
 		if ((ret=archivefs_common_read(hdr+HDR_L0_SIZE,HDR_L2_SIZE-HDR_L0_SIZE,offset+HDR_L0_SIZE,archive))<0) return ret;
 
 	if (hdr[HDR_L0_OFFSET_METHOD]!='-'||hdr[HDR_L0_OFFSET_METHOD+1]!='l'||hdr[HDR_L0_OFFSET_METHOD+2]!='h'||hdr[HDR_L0_OFFSET_METHOD+4]!='-')
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 
 	/* Amiga does not use -lhd- method for empty directories at any level, but we can still support it */
 	isDir=0;
@@ -92,7 +92,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		break;
 
 		default:
-		return ARCHIVEFS_ERROR_UNSUPPORTED_FORMAT;
+		return WVFS_ERROR_UNSUPPORTED_FORMAT;
 	}
 
 	/* common for all header levels */
@@ -117,7 +117,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		{
 			hdrSize=GET_LE16(hdr+HDR_L2_OFFSET_SIZE);
 			if (hdrSize<HDR_L2_SIZE)
-				return ARCHIVEFS_ERROR_INVALID_FORMAT;
+				return WVFS_ERROR_INVALID_FORMAT;
 			attributes=0;
 			nameLength=0;
 			nameOffset=0;
@@ -126,11 +126,11 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 			offset+=HDR_L2_SIZE;
 		} else {
 			if (hdrSize<HDR_L0_SIZE+HDR_L1_MID_SIZE+nameLength)
-				return ARCHIVEFS_ERROR_INVALID_FORMAT;
+				return WVFS_ERROR_INVALID_FORMAT;
 			if ((ret=archivefs_common_read(hdr,1,offset+HDR_L0_SIZE+nameLength+HDR_L1_MID_OFFSET_OS,archive))<0) return ret;
 			isAmiga=hdr[0]=='A';
 			if (offset+hdrSize>archive->fileLength)
-				return ARCHIVEFS_ERROR_INVALID_FORMAT;
+				return WVFS_ERROR_INVALID_FORMAT;
 			maxExtraOffset=archive->fileLength;
 			offset+=hdrSize;
 		}
@@ -155,7 +155,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 			offset++;
 			i++;
 			if (extraLength<3)
-				return ARCHIVEFS_ERROR_INVALID_FORMAT;
+				return WVFS_ERROR_INVALID_FORMAT;
 			extraLength-=3;
 			switch (hdr[2])
 			{
@@ -171,7 +171,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 
 				case HDR_EXTRA_ATTRIBUTES_ID:
 				if (extraLength<1)
-					return ARCHIVEFS_ERROR_INVALID_FORMAT;
+					return WVFS_ERROR_INVALID_FORMAT;
 				if ((ret=archivefs_common_read(hdr,1,offset,archive))<0) return ret;
 				attributes=hdr[0];
 				break;
@@ -190,26 +190,26 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		/* Technically the first extra header field is part of the main header in level2... */
 		if (level==2) i=2;
 		if (packedLength<i)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		packedLength-=i;
 	} else {
 		/* no way to encode os - lets play pretend */
 		isAmiga=1;
 
 		if (hdrSize<HDR_L0_SIZE+nameLength)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		if (offset+hdrSize+HDR_L0_MID_SIZE>archive->fileLength)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		offset+=hdrSize+HDR_L0_MID_SIZE;
 		/* extra stuff (CRC) are not part of header */
 		if (packedLength<HDR_L0_MID_SIZE)
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		packedLength-=HDR_L0_MID_SIZE;
 	}
 
 #ifndef ARCHIVEFS_ALLOW_NON_AMIGA_ARCHIVES
 	if (!isAmiga)
-		return ARCHIVEFS_ERROR_NON_AMIGA_ARCHIVE;
+		return WVFS_ERROR_NON_AMIGA_ARCHIVE;
 #endif
 
 	if (isDir)
@@ -217,7 +217,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 		packedLength=0;
 		rawLength=0;
 	} else if (!dataType&&packedLength!=rawLength)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 
 	/* Allocate the cached entry + enough size for strings and their null terminators
 	   This is little bit wasteful for level 0 headers. Those files should be rare though!
@@ -233,7 +233,7 @@ static int archivefs_lha_parse_entry(struct archivefs_cached_file_entry **dest,s
 	entry=archivefs_malloc(sizeof(struct archivefs_cached_file_entry)+i);
 	*dest=entry;
 	if (!entry)
-		return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+		return WVFS_ERROR_MEMORY_ALLOCATION_FAILED;
 	entry->prev=0;
 	entry->next=0;
 	stringSpace=(void*)(entry+1);
@@ -377,7 +377,7 @@ static int32_t archivefs_lha_fileRead(void *dest,struct archivefs_file_state *fi
 
 	entry=file_state->state.lha.entry;
 	if (length+offset>entry->length)
-		return ARCHIVEFS_ERROR_INVALID_READ;
+		return WVFS_ERROR_INVALID_READ;
 	if (entry->dataType)
 	{
 		if (!file_state->state.lha.decompressState)
@@ -442,7 +442,7 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 			break;
 
 			default:
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		}
 		archivefs_common_insertFileEntry(archive,entry);
 	}
@@ -451,7 +451,7 @@ int archivefs_lha_initialize(struct archivefs_state *archive)
 	{
 		archive->state.lha.decompressState=archivefs_lhaAllocateDecompressState(hasLH1,hasLH45,hasLH6);
 		if (!archive->state.lha.decompressState)
-			return ARCHIVEFS_ERROR_MEMORY_ALLOCATION_FAILED;
+			return WVFS_ERROR_MEMORY_ALLOCATION_FAILED;
 	}
 	return 0;
 }

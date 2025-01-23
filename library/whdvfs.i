@@ -58,7 +58,7 @@ WVFS_HEADER	MACRO
 	; dos.FileInfoBlock
 	; provided function regEntry will copy the information to private
 	; storage
-	; LONG cont regEntry(const CPTR name, const APTR fib)
+	; LONG cont regEntry(const CPTR name, const struct FileInfoBlock *fib)
 	; parameters:
 	;	name - full path + dir/file name
 	;	fib - filled FileInfoBlock structure
@@ -84,7 +84,7 @@ WVFS_HEADER	MACRO
 
 	; get filesize of an entry
 	; return positive numbers for size, negative numbers on error
-	; ULONG size getFileSize(APTR wvfs, const CPTR filename)
+	; LONG size getFileSize(APTR wvfs, const CPTR filename)
 	APTR	wvfs_getFileSize
 
 	; read part of file into given memory
@@ -104,6 +104,20 @@ WVFS_HEADER	MACRO
 ;=============================================================================
 
 	BITDEF WVFS,Dummy,0		; none yet
+
+;=============================================================================
+; Errorcodes returned from API functions
+;=============================================================================
+
+WVFS_ERROR_INVALID_FORMAT = -1		 ; invalid structure of supported file format
+WVFS_ERROR_UNSUPPORTED_FORMAT = -2	 ; file format is not supported
+WVFS_ERROR_MEMORY_ALLOCATION_FAILED = -3 ; failed to allocate memory
+WVFS_ERROR_FILE_NOT_FOUND = -4		 ; file does not exist
+WVFS_ERROR_NON_AMIGA_ARCHIVE = -5	 ; file misses Amiga specific meta information
+WVFS_ERROR_INVALID_FILE_TYPE = -6	 ; filename points to non-file (e.g. directory)
+WVFS_ERROR_DECOMPRESSION_ERROR = -7	 ; failed to decompress a file
+WVFS_ERROR_INVALID_READ = -8		 ; offset and/or length is not valid for this file
+WVFS_ERROR_OPERATION_CANCELED = -9	 ; callback returned stop condition
 
 ;=============================================================================
 

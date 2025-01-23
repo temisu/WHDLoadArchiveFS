@@ -89,7 +89,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 	tableLength=0;
 	archivefs_lhaReadBits(tableLength,bits);
 	if (tableLength>length)
-		return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+		return WVFS_ERROR_DECOMPRESSION_ERROR;
 	if (!tableLength)
 	{
 		value=0;
@@ -113,7 +113,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 				if (tmp) value++;
 			} while (tmp);
 			if (value>32U)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 		}
 		bitLengths[i++]=value;
 		if (i==3U && enableHole)
@@ -121,7 +121,7 @@ static int archivefs_lhaCreateSimpleTable(struct archivefs_lhaDecompressState *s
 			value=0;
 			archivefs_lhaReadBits(value,2U);
 			if (i+value>length)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 			while (value--)
 				bitLengths[i++]=0;
 		}
@@ -195,7 +195,7 @@ static int32_t archivefs_lhaInitializeBlock(struct archivefs_lhaDecompressState 
 			break;
 		}
 		if (i+rep>tableLength)
-			return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+			return WVFS_ERROR_DECOMPRESSION_ERROR;
 		while (rep--)
 			symbols[i++]=value;
 	}

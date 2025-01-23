@@ -16,7 +16,7 @@ static int32_t archivefs_common_readPartial(void *dest,int32_t length,uint32_t o
 	ret=archivefs_integration_fileRead(dest,length,archive->file);
 	if (ret<0) return ret;
 	archive->filePos+=ret;
-	if (ret!=length) return ARCHIVEFS_ERROR_INVALID_FORMAT;
+	if (ret!=length) return WVFS_ERROR_INVALID_FORMAT;
 	return length;
 }
 
@@ -87,7 +87,7 @@ int archivefs_common_readBlockBuffer(uint32_t blockIndex,struct archivefs_state 
 		{
 			archive->blockPos=0;
 			archive->blockLength=0;
-			return ARCHIVEFS_ERROR_INVALID_FORMAT;
+			return WVFS_ERROR_INVALID_FORMAT;
 		}
 		return 0;
 	} else {
@@ -102,7 +102,7 @@ int archivefs_common_initBlockBuffer(uint32_t offset,struct archivefs_state *arc
 	uint32_t blockIndex=offset>>archive->blockShift;
 
 	if (offset>=archive->fileLength)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	archive->blockPos=offset&((1U<<archive->blockShift)-1U);
 	if (blockIndex!=archive->blockIndex && ((int32_t)(archive->blockLength)>0))
 	{
@@ -176,7 +176,7 @@ static int32_t archivefs_common_copyBlock(uint8_t *dest,uint32_t startBlock,uint
 		copyOffset=0;
 	}
 	if (currentBlockLength>archive->blockLength)
-		return ARCHIVEFS_ERROR_INVALID_FORMAT;
+		return WVFS_ERROR_INVALID_FORMAT;
 	archivefs_common_memcpy(dest,archive->blockData+copyOffset,currentBlockLength-copyOffset);
 	return currentBlockLength-copyOffset;
 }

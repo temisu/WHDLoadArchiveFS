@@ -31,7 +31,7 @@ else
 # Amiga* targets
 # too lazy to construct AS for gcc/sas
 AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
-ifeq ($(TARGET),Amiga)
+ifeq ($(TARGET),AmigaV)
 CC	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
 CFSPEED	= -speed
@@ -61,9 +61,11 @@ LDFLAGS = Link SmallData SmallCode
 MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From $^
 CCVER	= $(VAMOS) sc | awk '/^SAS/ { printf " "$$0 }'
 endif
+ifeq ($(CCVER),)
+$(error supported TARGETs are AmigaG, AmigaS, AmigaV)
+endif
 INTEGRATION_OBJ = archivefs_integration_amiga.o
 LIB	= WHDLoad.VFS
-
 endif
 
 PROG	= test

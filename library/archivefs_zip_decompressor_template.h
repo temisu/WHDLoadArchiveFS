@@ -35,7 +35,7 @@
 		if (!blockLength)
 		{
 			if (final)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 			archivefs_zipReadBits(final,1U);
 			state->bitsLeft=bitsLeft;
 			state->accumulator=accumulator;
@@ -52,7 +52,7 @@
 #endif
 
 			if (pos+blockLength>length)
-				return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+				return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 			if (pos+bufLength>targetLength) bufLength=targetLength-pos;
 			blockLength-=bufLength;
@@ -90,13 +90,13 @@
 					archivefs_zipReadBits(count,archivefs_zip_LengthBits[symbol]);
 					count+=archivefs_zipLengthAdditions[symbol];
 					if (pos+count>length)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 					archivefs_zipHuffmanDecode(code,state->distanceTree);
 					archivefs_zipReadBits(distance,archivefs_zipDistanceBits[code]);
 					distance+=archivefs_zipDistanceAdditions[code];
 					if (distance>pos)
-						return ARCHIVEFS_ERROR_DECOMPRESSION_ERROR;
+						return WVFS_ERROR_DECOMPRESSION_ERROR;
 
 					while (pos<targetLength && count)
 					{

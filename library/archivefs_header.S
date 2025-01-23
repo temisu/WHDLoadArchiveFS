@@ -1,12 +1,12 @@
 ; Copyright (C) Teemu Suutari
 
+	INCLUDE	whdvfs.i
+
 ; section name must be .text to become first with m68k-amigaos-ld
 
 	SECTION .text,CODE
 
-	moveq	#-1,d0
-	rts
-	dc.b	"WHDLDVFS"
+	WVFS_HEADER
 	dc.w	1	; version
 	dc.w	0	; flags
 	dc.l	_name
