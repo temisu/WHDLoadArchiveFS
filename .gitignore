@@ -1,4 +1,6 @@
 *~
 *.o
+.ccver
+.date
 WHDLoad.VFS
 test
