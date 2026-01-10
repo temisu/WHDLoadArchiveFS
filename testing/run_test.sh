@@ -10,6 +10,7 @@ export DESCRIPTION="$(awk '/DESCRIPTION:/{flag=1;next}/--END/{flag=0}flag' $1)"
 echo -n "$DESCRIPTION ... "
 export PARAMS="$(awk '/PARAMS:/{flag=1;next}/--END/{flag=0}flag' $1)"
 export RESULT=$(mktemp)
+echo -n "(./test $PARAMS) "
 ./test $PARAMS >> $RESULT || {
 	echo "Failed"
 	echo "./test $PARAMS"

@@ -49,17 +49,21 @@ static void printFIB(const struct FIB *fib)
 		printf(": %s\n",fib->comment);
 }
 
+int quiet=0;
+
 static int test_registerFunc(const char *path,const void *fib)
 {
-	printf("Full path '%s'\n",path);
-	printFIB(fib);
+	if (!quiet) {
+		printf("Full path '%s'\n",path);
+		printFIB(fib);
+	}
 	return -1;
 }
 
 /* just a hack */
 static int allocatedFileCount=0;
-static void *allocatedFiles[1000];
-static const char *allocatedFilenames[1000];
+static void *allocatedFiles[10000];
+static const char *allocatedFilenames[10000];
 static void *archive;
 int toProcess,toSkip;
 
@@ -83,7 +87,7 @@ static void *test_allocFunc(const char *name,uint32_t length)
 		printf("archivefs_getFileSize returned wrong answer %u (should be %u)\n",verify,length);
 	}
 
-	printf("File '%s', Length %u\n",name,length);
+	if (!quiet) printf("File '%s', Length %u\n",name,length);
 	ret=archivefs_malloc(length);
 	if (!ret && !length) ret=(void*)0x80000000U;
 	allocatedFilenames[allocatedFileCount]=name;
@@ -120,26 +124,31 @@ int main(int argc,char **argv)
 
 	if (argc<3)
 	{
-		printf("no command or no archive file defined as a command line parameter\n");
-		return 0;
+		printf("usage:\n"
+			"test [-q] filecache archive.lha/zip [toProcess [toSkip]]\n"
+			"test [-q] examine   archive.lha/zip\n"
+			"test      read      archive.lha/zip file...\n"
+			"test      progress  archive.lha/zip\n");
+		return 1;
 	}
 
+	if (!strcmp(argv[1],"-q"))
+	{
+		quiet = 1;
+		argv++;
+		argc--;
+	}
 
 	ret=archivefs_initialize(&archive,argv[2]);
 	if (ret)
 	{
 		printf("archivefs_initialize failed with code %d (%s)\n",ret,archivefs_getErrorString(ret));
-		return 0;
+		return 1;
 	}
 	if (!strcmp(argv[1],"filecache"))
 	{
-		toProcess=1000;
-		toSkip=0;
-		if (argc>=5)
-		{
-			toProcess=atoi(argv[3]);
-			toSkip=atoi(argv[4]);
-		}
+		toProcess = argc>=4 ? atoi(argv[3]) : 10000;
+		toSkip = argc>=5 ? atoi(argv[4]) : 0;
 		printf("----------------------------------------------------------------------------\n");
 		printf("FileCache:\n");
 		ret=archivefs_fileCache(archive,test_allocFunc);
@@ -156,7 +165,7 @@ int main(int argc,char **argv)
 				printf("getFileSize failed with code %d (%s)\n",length,archivefs_getErrorString(length));
 				return 0;
 			} else {
-				printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
+				if (!quiet) printf("CRC for '%s': 0x%08x\n",allocatedFilenames[i],CRC32(allocatedFiles[i],length));
 				verify=archivefs_malloc(length);
 				ret=archivefs_fileRead(archive,verify,allocatedFilenames[i],length,0);
 				if (ret!=length) printf("archivefs_fileRead failed with code %d\n",ret);
