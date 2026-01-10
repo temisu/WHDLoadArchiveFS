@@ -1,4 +1,8 @@
 # Copyright (C) Teemu Suutari
+# TARGET=Amiga|AmigaG|AmigaS|clang selects compiler
+# PROF=1 compiles with profiling support (clang/gcc)
+#	m68k-amigaos-gprof test
+#	m68k-amigaos-gprof test | gprof2dot  | dot -Tpdf -o output.pdf
 
 VPATH	:= library testing
 
@@ -27,10 +31,17 @@ CFLAGS	= -g -Wall -Werror -Ilibrary -I.
 LDFLAGS =
 INTEGRATION_OBJ = archivefs_integration_unix.o
 LIB	=
+ifeq ($(PROF),1)
+CFLAGS	+= -pg
+LDFLAGS += -pg
+endif
 else
 # Amiga* targets
 # too lazy to construct AS for gcc/sas
 AS	= vasmm68k_mot -Fhunk -I$(INCLUDEOS3) -quiet
+INTEGRATION_OBJ = archivefs_integration_amiga.o
+LIB	= WHDLoad.VFS
+
 ifeq ($(TARGET),AmigaV)
 CC	= vc
 CFLAGS	= -Ilibrary -I. -I$(INCLUDEOS3) -sc -O2
@@ -41,14 +52,22 @@ LDFLAGS = -sc -final
 MKLIB	= $(CC) $(LDFLAGS) -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel -lvc -lamiga $(CFLAGP)$@ $^
 CCVER	= vbccm68k 2>/dev/null | awk '/vbcc V/ { printf " "$$1" "$$2 } /vbcc code/ { printf " "$$4" "$$5 }'
 endif
+
 ifeq ($(TARGET),AmigaG)
 CC	= m68k-amigaos-gcc
 CFLAGS	= -g -Wall -Ilibrary -I. -O2 -noixemul
 CFSPEED	= -O3
 LDFLAGS = -noixemul
-MKLIB	= m68k-amigaos-ld $(CFLAGP)$@ $^ -lc --strip-all
+MKLIB	= m68k-amigaos-ld -o $@ $^ -lc --strip-all
 CCVER	= m68k-amigaos-gcc --version | awk '/m68k/ { printf " "$$0 }'
+ifeq ($(PROF),1)
+CFLAGS	+= -pg
+LDFLAGS += -pg
+# building library with profiling does not work
+LIB	=
 endif
+endif
+
 ifeq ($(TARGET),AmigaS)
 CC	= $(VAMOS) sc
 CFLAGS	= Data=FarOnly IdentifierLength=40 IncludeDirectory=library Optimize OptimizerSchedule NoStackCheck NoVersion
@@ -61,11 +80,10 @@ LDFLAGS = Link SmallData SmallCode
 MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From $^
 CCVER	= $(VAMOS) sc | awk '/^SAS/ { printf " "$$0 }'
 endif
+
 ifeq ($(CCVER),)
 $(error supported TARGETs are AmigaG, AmigaS, AmigaV)
 endif
-INTEGRATION_OBJ = archivefs_integration_amiga.o
-LIB	= WHDLoad.VFS
 endif
 
 PROG	= test
@@ -108,7 +126,7 @@ $(LIB): $(OBJS_LIB)
 .PHONY: all clean .date .ccver
 
 clean:
-	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~ .date .ccver *.lnk
+	rm -f $(OBJS_LIB) $(OBJS_TEST) $(PROG) $(LIB) *~ */*~ .date .ccver *.lnk obj/*.o
 	test -d obj && rmdir obj || true
 
 run_tests: $(PROG)
