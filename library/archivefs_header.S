@@ -20,7 +20,7 @@
 	dc.l	_archivefs_getErrorString
 
 	dc.b	"$VER: "
-_name	dc.b 'ArchiveFS 1.3 '
+_name	dc.b 'ArchiveFS 1.4 '
 	INCBIN	.date
 	INCBIN	.ccver
 	dc.b	0

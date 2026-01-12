@@ -49,7 +49,7 @@ int archivefs_integration_fileOpen(const char *filename,uint32_t *length,uint8_t
 int archivefs_integration_fileClose(void *file);
 
 /*
-   archivefs_integration_fileSeel will be seek inside a file
+   archivefs_integration_fileSeek will be seek inside a file
    Parameters:
 	* offset - file offset from where to start reading
 	* file - opaque pointer for the file

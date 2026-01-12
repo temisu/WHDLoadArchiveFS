@@ -76,8 +76,8 @@ CFLAGC	=
 CFLAGD	= Define=
 CFLAGO	= ObjectName=
 CFLAGP	= ProgramName=
-LDFLAGS = Link SmallData SmallCode
-MKLIB	= $(VAMOS) slink SmallData SmallCode Quiet Lib lib:sc.lib To $@ From $^
+LDFLAGS = Link Data=FarOnly
+MKLIB	= $(VAMOS) slink Quiet Lib lib:sc.lib To $@ From $^
 CCVER	= $(VAMOS) sc | awk '/^SAS/ { printf " "$$0 }'
 endif
 

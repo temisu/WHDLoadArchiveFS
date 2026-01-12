@@ -51,7 +51,6 @@ zip-0 init 0.76 dircache  3.88 filecache  20.50 sum  25.14 (ArchiveFS 1.3 (13.01
 zip-1 init 0.62 dircache  3.90 filecache 206.38 sum 210.90 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 zip-9 init 0.66 dircache  3.88 filecache 205.88 sum 210.42 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 
-
 SpaceAce2
 ---------
 6 files
@@ -100,7 +99,6 @@ zip-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.3 (13.01
 zip-1 init 0.02 dircache  0.00 filecache  11.30 sum  11.32 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 zip-9 init 0.02 dircache  0.00 filecache  11.00 sum  11.02 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 
-
 Workbench31
 -----------
 567 files
@@ -148,4 +146,127 @@ lha-6 init 0.46 dircache  0.04 filecache   5.26 sum   5.76 (ArchiveFS 1.3 (13.01
 zip-0 init 0.10 dircache  0.02 filecache   0.86 sum   0.98 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 zip-1 init 0.10 dircache  0.02 filecache   6.12 sum   6.24 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 zip-9 init 0.12 dircache  0.02 filecache   5.90 sum   6.04 (ArchiveFS 1.3 (13.01.2025) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+
+2026-01-04 check different blocksizes in WHDLoad.VFS, Filesystem has always 512
+CSPPC/68060@60, IBM-DNES-318350W
+OS 3.2.3 SFS 1.279 200 Buffers
+XPK: xpackbest mash.100 sqsh.100
+SpaceAce2
+512:
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.06 dircache  0.00 filecache  10.00 sum  10.06 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   9.64 sum   9.70 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.04 dircache  0.00 filecache   0.64 sum   0.68 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  11.20 sum  11.24 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  10.92 sum  10.94 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+1024:
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.06 dircache  0.00 filecache   9.50 sum   9.56 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   9.10 sum   9.16 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.04 dircache  0.00 filecache   0.62 sum   0.66 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  10.64 sum  10.68 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  10.40 sum  10.42 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+2048:
+lha-0 init 0.06 dircache  0.00 filecache   0.76 sum   0.82 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.08 dircache  0.00 filecache   9.20 sum   9.28 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   8.82 sum   8.88 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.02 dircache  0.00 filecache   0.62 sum   0.64 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  10.34 sum  10.38 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  10.12 sum  10.14 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+4096:
+lha-0 init 0.06 dircache  0.00 filecache   0.72 sum   0.78 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.06 dircache  0.00 filecache   9.06 sum   9.12 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   8.66 sum   8.72 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.04 dircache  0.00 filecache   0.62 sum   0.66 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.02 dircache  0.00 filecache  10.18 sum  10.20 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.00 dircache  0.00 filecache   9.96 sum   9.96 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+BeneathASteelSkyCD32:
+512:
+lha-0 ini 10.10 dircache  3.88 filecache  19.62 sum  33.60 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 8.86 dircache  3.88 filecache 178.12 sum 190.86 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 8.86 dircache  3.86 filecache 175.90 sum 188.62 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 1.38 dircache  3.92 filecache  19.62 sum  24.92 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 1.40 dircache  3.94 filecache 203.36 sum 208.70 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 1.38 dircache  3.94 filecache 202.28 sum 207.60 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+1024:
+lha-0 ini 10.10 dircache  3.90 filecache  19.54 sum  33.54 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 8.92 dircache  3.90 filecache 169.80 sum 182.62 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 8.90 dircache  3.88 filecache 167.76 sum 180.54 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 1.28 dircache  3.94 filecache  19.56 sum  24.78 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 1.28 dircache  3.94 filecache 195.00 sum 200.22 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 1.28 dircache  3.94 filecache 194.06 sum 199.28 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+2048:
+lha-0 ini 10.26 dircache  3.88 filecache  19.64 sum  33.78 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 9.04 dircache  3.88 filecache 165.38 sum 178.30 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 9.04 dircache  3.90 filecache 163.06 sum 176.00 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 1.18 dircache  3.94 filecache  19.56 sum  24.68 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 1.18 dircache  3.94 filecache 189.70 sum 194.82 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 1.20 dircache  3.94 filecache 189.00 sum 194.14 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+4096:
+lha-0 ini 10.54 dircache  3.90 filecache  20.02 sum  34.46 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 8.96 dircache  3.92 filecache 162.36 sum 175.24 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 8.94 dircache  3.92 filecache 160.08 sum 172.94 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.98 dircache  3.98 filecache  19.26 sum  24.22 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.98 dircache  3.98 filecache 188.42 sum 193.38 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.98 dircache  3.98 filecache 186.28 sum 191.24 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+
+Test other Filesystems, BlockSize=512
+PFSAIO 3.1 300 buffers BS=512
+lha-5 init 8.44 dircache  3.86 filecache 248.18 sum 260.48 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+PFSAIO 3.1 600 buffers BS=512
+lha-5 init 8.48 dircache  3.86 filecache 246.88 sum 259.22 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+FFS 47.4 200 buffers BS=512
+lha-5 ini 28.60 dircache  3.88 filecache 249.54 sum 282.02 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+Test other Filesystems, BlockSize=1024
+PFSAIO 3.1 300 buffers
+lha-5 init 7.10 dircache  3.88 filecache 203.26 sum 214.24 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+FFS 47.4 200 buffers
+lha-5 ini 15.54 dircache  3.88 filecache 204.70 sum 224.12 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+Test other Filesystems, BlockSize=2048
+PFSAIO 3.1 300 buffers
+lha-5 init 7.02 dircache  3.88 filecache 179.50 sum 190.40 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+FFS 47.4 200 buffers
+lha-5 ini 26.94 dircache  3.88 filecache 181.86 sum 212.68 (ArchiveFS 1.4 (04.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+
+2026-01-11 check different blocksizes in the Filesystem
+CSPPC/68060@60, IBM-DNES-318350W
+OS 3.2.3 SFS 1.279 100 Buffers
+XPK: xpackbest mash.100 sqsh.100
+SpaceAce2
+1024:
+plain init 0.00 dircache  0.00 filecache   0.42 sum   0.42 ()
+xpk   init 0.00 dircache  0.00 filecache   2.10 sum   2.10 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.06 dircache  0.00 filecache   9.34 sum   9.40 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.08 dircache  0.00 filecache   8.96 sum   9.04 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.04 dircache  0.00 filecache   0.62 sum   0.66 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  10.52 sum  10.56 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  10.24 sum  10.26 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+2048:
+plain init 0.00 dircache  0.00 filecache   0.44 sum   0.44 ()
+xpk   init 0.00 dircache  0.00 filecache   2.12 sum   2.12 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.08 dircache  0.00 filecache   9.10 sum   9.18 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.04 dircache  0.00 filecache   8.70 sum   8.74 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.04 dircache  0.00 filecache   0.64 sum   0.68 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  10.24 sum  10.28 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache  10.00 sum  10.02 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+4096:
+plain init 0.00 dircache  0.00 filecache   0.42 sum   0.42 ()
+xpk   init 0.00 dircache  0.00 filecache   2.08 sum   2.08 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.74 sum   0.80 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.08 dircache  0.00 filecache   8.98 sum   9.06 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.06 dircache  0.00 filecache   8.58 sum   8.64 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.02 dircache  0.00 filecache   0.62 sum   0.64 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache  10.12 sum  10.16 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache   9.88 sum   9.90 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+8192:
+plain init 0.00 dircache  0.00 filecache   0.44 sum   0.44 ()
+xpk   init 0.00 dircache  0.00 filecache   2.10 sum   2.10 ()
+lha-0 init 0.06 dircache  0.00 filecache   0.64 sum   0.70 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-5 init 0.06 dircache  0.00 filecache   8.76 sum   8.82 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+lha-6 init 0.08 dircache  0.00 filecache   8.38 sum   8.46 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-0 init 0.02 dircache  0.00 filecache   0.56 sum   0.58 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-1 init 0.04 dircache  0.00 filecache   9.88 sum   9.92 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
+zip-9 init 0.02 dircache  0.00 filecache   9.64 sum   9.66 (ArchiveFS 1.4 (11.01.2026) m68k-amigaos-gcc (GCC) 6.5.0b 250109110206)
 
