@@ -19,9 +19,6 @@ struct archivefs_lhaDecompressState
 	uint32_t	rawLength;
 	uint32_t	rawPos;
 
-	uint16_t	accumulator;
-	uint8_t		bitsLeft;
-
 	/*
 	   lh4: 4095 bytes of history
 	   lh5: 8191 bytes of history
@@ -32,6 +29,18 @@ struct archivefs_lhaDecompressState
 	   * Optional Huffman Distance decoder of max 16 entries
 	*/
 	uint32_t	method;		/* 4 = LH4, 5 = LH5, 6 = LH6 */
+
+#if defined __M68K__ || defined __m68k__ || defined M68000
+    uint32_t    maxWindowSize;
+    uint8_t*    window;
+    uint32_t    windowStart;
+    uint32_t    windowSize;
+    uint8_t*    reqBuf;
+    uint32_t    reqOffset;
+    uint32_t    reqLength;
+#else
+	uint16_t	accumulator;
+	uint8_t		bitsLeft;
 
 	uint16_t	blockRemaining;
 	uint16_t	remainingRepeat;
@@ -44,6 +53,7 @@ struct archivefs_lhaDecompressState
 	uint16_t	distanceTree[16*2+1];
 
 	uint8_t		history[ARCHIVEFS_LHA_LH5_HISTORY_SIZE];
+#endif
 };
 
 struct archivefs_lhaDecompressState *archivefs_lhaAllocateDecompressState(int hasLH1,int hasLH45,int hasLH6);
