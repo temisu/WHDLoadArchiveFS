@@ -83,7 +83,7 @@ struct archivefs_lhaDecompressState *archivefs_lhaAllocateDecompressState(int ha
 	state=archivefs_malloc(size);
 	if (state)
 	{
-		state->window=(uint8_t*)state+stateSize;
+		state->window=(uint8_t*)state+sizeof(*state)+stateSize;
 		state->maxWindowSize=windowSize;
 	}
 	return state;
@@ -129,10 +129,6 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 
 		case 6:
 		windowBits=15;
-		break;
-
-		case 7:
-		windowBits=16;
 		break;
 
 		default:
