@@ -33,6 +33,7 @@ typedef int (*WriteCallbackType)(REG(a0,void* context),REG(a1,uint8_t* buf),REG(
 
 extern uint32_t UnlhaStateSize(void);
 extern int32_t Unlha(REG(a6,UnlhaState* state),REG(a0,void* context),REG(a1,ReadCallbackType readCallback),REG(a2,WriteCallbackType writeCallback),REG(a3,uint8_t* window),REG(d0,uint32_t outSize),REG(d1,uint16_t windowBits));
+extern int32_t UnlhaComplete(REG(a6,UnlhaState* state), REG(a0,void* context), REG(a1,ReadCallbackType ReadCallback), REG(a2,uint8_t* Dest), REG(d0,uint32_t OutSize), REG(d1,uint16_t WindowBits));
 extern int32_t UnlhaResume(REG(a6,UnlhaState* state));
 
 static uint32_t readCallback(REG(a0,void* context), REG(a1,uint8_t** buf))
@@ -147,7 +148,10 @@ int32_t archivefs_lhaDecompress(struct archivefs_lhaDecompressState *state,uint8
 		state->filePos=0;
 		if ((ret=initBlockBuffer(state))<0)
 			return ret;
-		ret=Unlha(unlhaState,state,&readCallback,&writeCallback,state->window,state->rawLength,windowBits);
+		if (length==state->rawLength)
+			ret=UnlhaComplete(unlhaState,state,&readCallback,dest,state->rawLength,windowBits);
+		else
+			ret=Unlha(unlhaState,state,&readCallback,&writeCallback,state->window,state->rawLength,windowBits);
 	}
 	else
 	{

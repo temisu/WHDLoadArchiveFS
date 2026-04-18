@@ -21,9 +21,10 @@ MAXBITS		EQU 16
 PTTABBITS	EQU 8
 CTABBITS	EQU 11 ; 10 is faster on 060
 
-RSEVEN	  	MACRO
-		rs.b    (__RS&1)
-		ENDM
+; Present in newer versions of vasm
+;RSEVEN	  	MACRO
+;		rs.b    (__RS&1)
+;		ENDM
 
 		; Global register usage (except for MakeTable which doesn't need a3-a4/d3-d4)
 		; a6 = State
@@ -38,27 +39,28 @@ RSEVEN	  	MACRO
 		; There is a bit of input overrun
 
 		rsreset
-st_OldStack	rs.l    1
-st_Context	rs.l    1
-st_ReadCallback	rs.l    1
-st_WriteCallback rs.l   1
-st_OutSize	rs.l    1
-st_PTclen	rs.b    NT
+st_OldStack	rs.l	1
+st_Context	rs.l	1
+st_ReadCallback	rs.l	1
+st_WriteCallback rs.l	1
+st_OutSize	rs.l	1
+st_PTBits	rs.w	1
+st_PTclen	rs.b	NT
 		RSEVEN
-st_Cclen	rs.b    NC
+st_Cclen	rs.b	NC
 		RSEVEN
-		rs.w    2*(NT-1)
-st_PTtable	rs.w    1<<PTTABBITS
-		rs.w    2*(NC-1)
-st_Ctable	rs.w    1<<CTABBITS
-st_SavedState	rs.l    14
-st_SavedRetAddr	rs.l    1
-st_SIZEOF	rs.b    0 ; Must be last
+		rs.w	2*(NT-1)
+st_PTtable	rs.w	1<<PTTABBITS
+		rs.w	2*(NC-1)
+st_Ctable	rs.w	1<<CTABBITS
+st_SavedState	rs.l	14
+st_SavedRetAddr	rs.l	1
+st_SIZEOF	rs.b	0 ; Must be last
 
 		rsreset
-mt_LenCnt	rs.w    MAXBITS
-mt_Next		rs.w    MAXBITS
-mt_SIZEOF	rs.b    0	  ; Must be last
+mt_LenCnt	rs.w	MAXBITS
+mt_Next		rs.w	MAXBITS
+mt_SIZEOF	rs.b	0	  ; Must be last
 
 ; d0 = NumSymbols
 ; d1 = TableBits
@@ -448,6 +450,27 @@ Exit:
 		movem.l (sp)+,d2-d7/a2-a5
 		rts
 
+ReadTables:
+		movem.l	d5-d7/a2/a5,-(sp)
+		moveq	#TBIT,d0
+		moveq	#3,d1
+		bsr	ReadPT
+		bsr	ReadC
+		move.w	st_PTBits(a6),d0
+		moveq	#-1,d1
+		bsr	ReadPT
+		movem.l	(sp)+,d5-d7/a2/a5
+		rts
+
+InitPTBits:	; d1 = WindowBits
+		moveq   #4,d0
+		cmp.b   #13,d1
+		bls     .smallwindow
+		addq.w  #1,d0   ; 5 bits when WindowBits > 13
+.smallwindow
+		move.w  d0,st_PTBits(a6)
+		rts
+
 ReadBit:
 		moveq   #1,d0
 ReadBits:
@@ -482,6 +505,7 @@ _Unlha::
 		moveq   #0,d7
 		bset.l  d1,d7
 		subq.l  #1,d7		; WindowMask
+		bsr	InitPTBits
 		bra     .readheader
 .loop
 		DECODE_C
@@ -569,21 +593,7 @@ _Unlha::
 		bsr     ReadBits
 		move.w  d0,d5
 		subq.w  #1,d5
-
-		movem.l d5-d7/a2/a5,-(sp)	; Note below btst if changing
-		moveq   #TBIT,d0
-		moveq   #3,d1
-		bsr     ReadPT
-		bsr     ReadC
-		moveq   #4,d0
-		;btst.l  #13,d7 ; d7 could be trashed!
-		btst.b  #13-8,10(sp)
-		beq     .smallwindow
-		addq.w  #1,d0		; 5 bits when WindowBits > 13
-.smallwindow
-		moveq   #-1,d1
-		bsr     ReadPT
-		movem.l (sp)+,d5-d7/a2/a5
+		bsr	ReadTables
 		bra     .loop
 .done
 		move.l  d6,d0
@@ -658,6 +668,97 @@ _UnlhaResume::
 		movem.l st_SavedState(a6),d0-d7/a0-a5
 		move.l  st_SavedRetAddr(a6),-(sp)
 		rts
+
+UnlhaComplete::
+_UnlhaComplete::
+		movem.l	d2-d7/a2-a5,-(sp)
+		move.l	sp,st_OldStack(a6)
+		move.l	a0,st_Context(a6)
+		move.l	a1,st_ReadCallback(a6)
+		move.l	d0,st_OutSize(a6)
+		moveq	#0,d3	   ; BitBuf
+		moveq	#0,d4	   ; BitBufBits
+		; d5 = BlockSize
+		moveq	#0,d6	   ; OutPos
+		moveq	#0,d7	   ; Length
+		sub.l	a3,a3	   ; InBufPtr
+		sub.l	a4,a4	   ; InBufEnd
+		lea	st_Ctable(a6),a5
+		bsr	InitPTBits
+		bra	.readheader
+
+.loop
+		DECODE_C
+		cmp.w	#256,d2
+		bhs	.match
+		move.b	d2,(a2)+
+		addq.l	#1,d6
+		dbf	d5,.loop
+		bra	.readheader
+.ofs1
+		moveq	#0,d0
+		bra	.haveoffset
+.match
+		sub.w	#256-3,d2	; Length
+		move.w	d2,d7
+
+		DECODE_PT a1
+		subq.w	#1,d2
+		bmi	.ofs1
+		sub.b	d2,d4
+		bpl	.havebits
+		GET_BITS
+.havebits
+		move.l	d3,d0
+		lsr.l	d4,d0
+		moveq	#0,d1
+		bset.l	d4,d1
+		subq.l	#1,d1
+		and.l	d1,d3
+		bset.l	d2,d0
+.haveoffset
+		cmp.l	d6,d0
+		bhs	.spaces
+		neg.l	d0
+		add.l	d7,d6
+		lea	-1(a2,d0.l),a0
+		subq.w	#3,d7
+		move.b	(a0)+,(a2)+
+		move.b	(a0)+,(a2)+
+.matchloop
+		move.b	(a0)+,(a2)+
+.matchiter
+		dbf	d7,.matchloop
+		dbf	d5,.loop
+.readheader
+		cmp.l	st_OutSize(a6),d6
+		beq	.done
+		bhi	Fatal
+		moveq	#16,d0
+		bsr	ReadBits
+		move.w	d0,d5
+		subq.w	#1,d5
+		bsr	ReadTables
+		lea	st_PTtable(a6),a1
+		bra	.loop
+.done
+		move.l	d6,d0
+		movem.l	(sp)+,d2-d7/a2-a5
+		rts
+.spaces
+		addq.l	#1,d0
+		move.l	d0,d1
+		sub.l	d6,d1		; number of spaces
+		add.l	d7,d6		; update OutPos
+		sub.w	d1,d7		; update length
+		lea	(a2,d1.l),a0
+		sub.l	d0,a0
+		moveq	#' ',d0
+.sploop
+		move.b	d0,(a2)+
+		subq.w	#1,d1
+		bne	.sploop
+		bra	.matchiter
 
 UnlhaStateSize::
 _UnlhaStateSize::
