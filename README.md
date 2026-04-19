@@ -70,6 +70,12 @@ Please use the github tracker for bugs, feature requests. PRs are also welcome.
 For any other feedback use tz at iki dot fi
 
 
+## Contributors
+
+* Teemu Suutari - Original code
+* Bert Jahn - Lots of bug fixes, WHDLoad integration (obviously), performance tests, build improvements
+* Michael Rasmussen - Assembly optimized LH4/5/6 decompressor.
+
 ## Known issues
 
 * Some rarely used compression features are not tested yet, thus they are probably broken
