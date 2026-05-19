@@ -30,7 +30,7 @@ struct archivefs_lhaDecompressState
 	*/
 	uint32_t	method;		/* 4 = LH4, 5 = LH5, 6 = LH6 */
 
-#if defined __M68K__ || defined __m68k__ || defined M68000
+#if defined __M68K__ || defined __m68k__ || defined M68000 || defined __SASC
     uint32_t    maxWindowSize;
     uint8_t*    window;
     uint32_t    windowStart;
