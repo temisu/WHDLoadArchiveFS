@@ -264,8 +264,9 @@ static const char *archivefs_errors[]={
 	"Unsupported input file format (non Amiga archive)",
 	"Invalid file type",
 	"Decompression failure",
-	"Invalid read parameters"
+	"Invalid read parameters",
 	"Operation canceled",
+	"68020+ CPU required",
 	"Unknown error"};
 
 const char *archivefs_getErrorString(int error_code)

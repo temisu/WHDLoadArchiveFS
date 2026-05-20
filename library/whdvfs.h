@@ -22,6 +22,7 @@
 #define WVFS_ERROR_DECOMPRESSION_ERROR (-7)	 /* failed to decompress a file */
 #define WVFS_ERROR_INVALID_READ (-8)		 /* offset and/or length is not valid for this file */
 #define WVFS_ERROR_OPERATION_CANCELED (-9)	 /* callback returned stop condition */
+#define WVFS_ERROR_68020_REQUIRED (-10)	 	 /* VFS requires at least 68020 */
 
 /*
 ** API functions

@@ -3,6 +3,7 @@
 ;  :Contens.	include file for WHDLoad virtual filesystem interface
 ;  :Author.	Bert Jahn
 ;  :History.	2020-11-13 created
+;		2026-05-10 WVFS_ERROR_68020_REQUIRED added
 ;  :Copyright.	© 2020 Bert Jahn, All Rights Reserved
 ;  :Language.	68000 Assembler
 ;  :Translator.	BASM 2.16, ASM-One 1.44, Asm-Pro 1.17, PhxAss 4.38, Devpac 3.18, VASM 1.8h
@@ -118,6 +119,7 @@ WVFS_ERROR_INVALID_FILE_TYPE = -6	 ; filename points to non-file (e.g. directory
 WVFS_ERROR_DECOMPRESSION_ERROR = -7	 ; failed to decompress a file
 WVFS_ERROR_INVALID_READ = -8		 ; offset and/or length is not valid for this file
 WVFS_ERROR_OPERATION_CANCELED = -9	 ; callback returned stop condition
+WVFS_ERROR_68020_REQUIRED = -10		 ; VFS requires at least 68020
 
 ;=============================================================================
 
