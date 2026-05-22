@@ -1,0 +1,9 @@
+
+set src wepl@imac:home
+
+bebboscp $src/WHDLoadArchiveFS/WHDLoad.VFS WHDLoad.VFS.000
+bebboscp $src/WHDLoadArchiveFS/WHDLoad.VFS.020 WHDLoad.VFS.020
+
+;bebboscp $src/WHDLoadArchiveFS/test test
+;bebboscp $src/WHDLoadArchiveFS/test.020 test.020
+

@@ -1,4 +1,4 @@
-.key Slave/A,DataDir/A,WHDLoadOptions/M
+.key Slave/A,DataDir/A,OnlyLha/S,WHDLoadOptions/M
 .bra [
 .ket ]
 
@@ -70,22 +70,50 @@ set WHD "WHDLoadPP [Slave] NoReq SplashDelay=1 Preload PreloadSize=$PS ExecuteSt
 echo "Command=$WHD"
 FailAt 20
 
-echo "plain " noline
-$WHD $DATA
-echo "xpk   " noline
-$WHD $DATA.xpk
-echo "lha-0 " noline
-$WHD $DATA.0.lha
-;echo "lha-1 " noline
-;$WHD $DATA.1.lha
-echo "lha-5 " noline
-$WHD $DATA.5.lha
-echo "lha-6 " noline
-$WHD $DATA.6.lha
-echo "zip-0 " noline
-$WHD $DATA.0.zip
-echo "zip-1 " noline
-$WHD $DATA.1.zip
-echo "zip-9 " noline
-$WHD $DATA.9.zip
+if "[OnlyLha]" eq ""
+	echo "plain " noline
+	$WHD $DATA
+	echo "xpk   " noline
+	$WHD $DATA.xpk
+endif
+
+; 68000
+copy WHDLoad.VFS.000 WHDLoad.VFS
+
+	echo "lha-0 " noline
+	$WHD $DATA.0.lha
+	;echo "lha-1 " noline
+	;$WHD $DATA.1.lha
+	echo "lha-5 " noline
+	$WHD $DATA.5.lha
+	echo "lha-6 " noline
+	$WHD $DATA.6.lha
+if "[OnlyLha]" eq ""
+	echo "zip-0 " noline
+	$WHD $DATA.0.zip
+	echo "zip-1 " noline
+	$WHD $DATA.1.zip
+	echo "zip-9 " noline
+	$WHD $DATA.9.zip
+endif
+
+; 68020
+copy WHDLoad.VFS.020 WHDLoad.VFS
+
+	echo "lha-0 " noline
+	$WHD $DATA.0.lha
+	;echo "lha-1 " noline
+	;$WHD $DATA.1.lha
+	echo "lha-5 " noline
+	$WHD $DATA.5.lha
+	echo "lha-6 " noline
+	$WHD $DATA.6.lha
+if "[OnlyLha]" eq ""
+	echo "zip-0 " noline
+	$WHD $DATA.0.zip
+	echo "zip-1 " noline
+	$WHD $DATA.1.zip
+	echo "zip-9 " noline
+	$WHD $DATA.9.zip
+endif
 

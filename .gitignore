@@ -2,5 +2,10 @@
 *.o
 .ccver
 .date
+.target
+CLAUDE.md
 WHDLoad.VFS
+WHDLoad.VFS.020
 test
+test.020
+test.lnk
