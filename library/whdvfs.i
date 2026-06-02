@@ -4,7 +4,7 @@
 ;  :Author.	Bert Jahn
 ;  :History.	2020-11-13 created
 ;		2026-05-10 WVFS_ERROR_68020_REQUIRED added
-;  :Copyright.	© 2020 Bert Jahn, All Rights Reserved
+;  :Copyright.	© 2020,2025,2026 Bert Jahn, All Rights Reserved
 ;  :Language.	68000 Assembler
 ;  :Translator.	BASM 2.16, ASM-One 1.44, Asm-Pro 1.17, PhxAss 4.38, Devpac 3.18, VASM 1.8h
 ;---------------------------------------------------------------------------*

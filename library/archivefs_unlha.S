@@ -39,12 +39,11 @@ CTABBITS	EQU 11 ; 10 is faster on 060
 		; There is a bit of input overrun
 
 		rsreset
-st_OldStack	rs.l	1
 st_Context	rs.l	1
+st_OldStack	rs.l	1
 st_ReadCallback	rs.l	1
 st_WriteCallback rs.l	1
 st_OutSize	rs.l	1
-st_PTBits	rs.w	1
 st_PTclen	rs.b	NT
 		RSEVEN
 st_Cclen	rs.b	NC
@@ -53,6 +52,7 @@ st_Cclen	rs.b	NC
 st_PTtable	rs.w	1<<PTTABBITS
 		rs.w	2*(NC-1)
 st_Ctable	rs.w	1<<CTABBITS
+st_PTBits	rs.w	1
 st_SavedState	rs.l	14
 st_SavedRetAddr	rs.l	1
 st_SIZEOF	rs.b	0 ; Must be last
@@ -71,25 +71,25 @@ MakeTable:
 		lea     -mt_SIZEOF(sp),sp
 
 		moveq   #0,d2
-		move.w  #2*MAXBITS/4-1,d3
-		lea     mt_LenCnt(sp),a3
+		moveq	#2*MAXBITS/4-1,d3
 		move.l  sp,a3
-.clr
-		move.l  d2,(a3)+
+.clr		move.l  d2,(a3)+
 		dbf     d3,.clr
 
 		;
 		; Count code lengths
 		;
-		moveq   #0,d2
 		moveq   #0,d3
-.count
-		move.b  (a0,d2.w),d3
+.count		move.b  (a0,d2.w),d3
 		beq     .nextcount
 		cmp.b   #16,d3
 		bhi     Fatal
+	IFNE IS020
+		addq.w  #1,mt_LenCnt-2(sp,d3.w*2)
+	ELSE
 		add.w   d3,d3
 		addq.w  #1,mt_LenCnt-2(sp,d3.w)
+	ENDC
 .nextcount
 		addq.w  #1,d2
 		cmp.w   d2,d0
@@ -118,16 +118,16 @@ MakeTable:
 		;
 		; Clear table entries for tree roots
 		;
-		IFNE IS020
+	IFNE IS020
 		move.w  mt_Next(sp,d1.w*2),d2
-		ELSE
+	ELSE
 		move.w  d1,d2
 		add.w   d2,d2
 		move.w  mt_Next(sp,d2.w),d2
-		ENDC
+	ENDC
 		lsr.w   #1,d2
 		moveq   #0,d3
-		bset.l  d1,d3
+		bset	d1,d3
 		sub.w   d2,d3
 		subq.w  #1,d3
 		bmi     .noclear
@@ -148,13 +148,13 @@ MakeTable:
 		moveq   #0,d4
 		move.b  (a0)+,d4	; code length
 		beq     .tabiter
-		IFNE IS020
+	IFNE IS020
 		lea     mt_Next-2(sp,d4.w*2),a3
-		ELSE
+	ELSE
 		move.w  d4,d5
 		add.w   d5,d5
 		lea     mt_Next-2(sp,d5.w),a3
-		ENDC
+	ENDC
 		move.w  (a3),d5		; code
 		addq.w  #1,(a3)
 
@@ -164,12 +164,12 @@ MakeTable:
 		; d4 = tlen
 		move.w  d5,d6
 		lsr.w   d4,d6		; code >> tlen
-		IFNE IS020
+	IFNE IS020
 		lea     (a1,d6.w*2),a4	; &table[code >> tlen]
-		ELSE
+	ELSE
 		add.w   d6,d6
 		lea     (a1,d6.w),a4	; &table[code >> tlen]
-		ENDC
+	ENDC
 		moveq   #16,d6
 		sub.w   d4,d6
 		lsl.w   d6,d5		; code <<= 16 - tlen
@@ -180,36 +180,36 @@ MakeTable:
 		subq.w  #2,d3
 		move.w  d3,(a4)
 		move.w  d3,d6
-		IFNE IS020
+	IFNE IS020
 		clr.l   (a1,d6.w*2)
-		ELSE
+	ELSE
 		move.w  d6,d7
 		add.w   d7,d7
 		clr.l   (a1,d7.w)
-		ENDC
+	ENDC
 .haveentry
 		add.w   d5,d5
 		bcc     .left
 		addq.w  #1,d6
 .left
-		IFNE IS020
+	IFNE IS020
 		lea     (a1,d6.w*2),a4
-		ELSE
+	ELSE
 		add.w   d6,d6
 		lea     (a1,d6.w),a4
-		ENDC
+	ENDC
 		dbf     d4,.buildtree
 		move.w  d2,(a4)
 		bra     .tabiter
 .fill
 		neg.w   d4
 		lsl.w   d4,d5		; code <<= tbits-cl
-		IFNE IS020
+	IFNE IS020
 		lea     (a1,d5.w*2),a4	; &table[code]
-		ELSE
+	ELSE
 		add.w   d5,d5
 		lea     (a1,d5.w),a4	; &table[code]
-		ENDC
+	ENDC
 		moveq   #0,d5
 		bset.l  d4,d5		; 1 << (tbits-cl)
 		subq.w  #1,d5
@@ -225,22 +225,25 @@ MakeTable:
 		movem.l (sp)+,d3-d4/a3-a4
 		rts
 
+	IFNE IS020
+		CNOP    0,4
+	ENDC
 LoadData:       ; d4 = availbits-requested bits
-		movem.l d0-d1/a0-a2,-(sp)
+		movem.l d1/a0-a2,-(sp)
 .moredata
 		move.l  st_Context(a6),a0
 		move.l  st_ReadCallback(a6),a2
-		lea     -4(sp),sp
+		subq.l	#4,sp
 		move.l  sp,a1
 		jsr     (a2)
 		move.l  (sp)+,a3
 		lea     (a3,d0.l),a4
-		btst.l  #0,d0
+		btst	#0,d0
 		beq     .aligned
 		; We require word aligned data, but there are two cases that are OK:
 		; 1) We may require a tiny bit of extra (unused) bits at the end
 		move.l  a3,d1
-		btst.l  #0,d1		; Input buffer aligned?
+		btst	#0,d1		; Input buffer aligned?
 		beq     .aligned	; OK - we'll allow it
 		; 2) The very first byte can be unaligned
 		cmp.b   #-16,d4
@@ -250,7 +253,7 @@ LoadData:       ; d4 = availbits-requested bits
 		subq.l  #1,d0
 		beq     .moredata	; Was last byte of first (input) block
 .aligned
-		movem.l (sp)+,d0-d1/a0-a2
+		movem.l (sp)+,d1/a0-a2
 		rts
 
 GET_BITS	MACRO
@@ -276,12 +279,12 @@ DECODE_SYM      MACRO
 		move.l  d3,d0
 		lsr.l   d1,d0
 		; lookup in table
-		IFNE IS020
+	IFNE IS020
 		move.w  (\2,d0.w*2),d2
-		ELSE
+	ELSE
 		add.w   d0,d0
 		move.w  (\2,d0.w),d2
-		ENDC
+	ENDC
 		bpl     .hit\@
 		cmp.b   #16,d4
 		bhs     .tab\@
@@ -294,19 +297,25 @@ DECODE_SYM      MACRO
 		beq     .left\@
 		addq.w  #1,d2
 .left\@
-		IFNE IS020
+	IFNE IS020
 		move.w  (\2,d2.w*2),d2
-		ELSE
+	ELSE
 		add.w   d2,d2
 		move.w  (\2,d2.w),d2
-		ENDC
+	ENDC
 		bmi     .tab\@
 .hit\@
 		; drop bits from buffer
 		sub.b   \3(a6,d2.w),d4
+	IFNE IS020
+		moveq   #-1,d0
+		lsl.l   d4,d0
+		not.l   d0
+	ELSE
 		moveq   #0,d0
 		bset.l  d4,d0
 		subq.l  #1,d0
+	ENDC
 		and.l   d0,d3
 .out\@
 		ENDM
@@ -325,11 +334,13 @@ ReadPT:
 		lea     st_PTclen(a6),a5
 
 		moveq   #0,d0
-		move.l  a5,a0
-		moveq   #NT-1,d1
-.clear
-		move.b  d0,(a0)+
-		dbf     d1,.clear
+		move.l  a5,a0		; clear NT bytes
+		move.l  d0,(a0)+
+		move.l  d0,(a0)+
+		move.l  d0,(a0)+
+		move.l  d0,(a0)+	; 16 bytes
+		move.w  d0,(a0)+	; 18 bytes
+		move.b  d0,(a0)+	; 19 bytes
 
 		move.l  d5,d0
 		bsr     ReadBits
@@ -385,10 +396,11 @@ ReadC:
 		lea     st_PTtable(a6),a2
 		move.l  a5,a0
 		moveq   #0,d0
-		move.w  #NC/2-1,d1
+		moveq   #NC/4-1,d1	; 127 longwords = 508 bytes
 .clear
-		move.w  d0,(a0)+
+		move.l  d0,(a0)+
 		dbf     d1,.clear
+		move.w  d0,(a0)		; last 2 bytes
 
 		moveq   #CBIT,d0
 		bsr     ReadBits
@@ -471,6 +483,9 @@ InitPTBits:	; d1 = WindowBits
 		move.w  d0,st_PTBits(a6)
 		rts
 
+	IFNE IS020
+		CNOP    0,4
+	ENDC
 ReadBit:
 		moveq   #1,d0
 ReadBits:
@@ -480,9 +495,15 @@ ReadBits:
 .havebits
 		move.l  d3,d0
 		lsr.l   d4,d0
+	IFNE IS020
+		moveq   #-1,d1
+		lsl.l   d4,d1
+		not.l   d1
+	ELSE
 		moveq   #0,d1
 		bset.l  d4,d1
 		subq.l  #1,d1
+	ENDC
 		and.l   d1,d3
 		rts
 
@@ -507,6 +528,9 @@ _Unlha::
 		subq.l  #1,d7		; WindowMask
 		bsr	InitPTBits
 		bra     .readheader
+	IFNE IS020
+		CNOP    0,4
+	ENDC
 .loop
 		DECODE_C
 		cmp.w   #256,d2
@@ -536,9 +560,15 @@ _Unlha::
 .havebits
 		move.l  d3,d0
 		lsr.l   d4,d0
+	IFNE IS020
+		moveq   #-1,d1
+		lsl.l   d4,d1
+		not.l   d1
+	ELSE
 		moveq   #0,d1
 		bset.l  d4,d1
 		subq.l  #1,d1
+	ENDC
 		and.l   d1,d3
 		bset.l  d2,d0
 .haveoffset
@@ -687,6 +717,9 @@ _UnlhaComplete::
 		bsr	InitPTBits
 		bra	.readheader
 
+	IFNE IS020
+		CNOP    0,4
+	ENDC
 .loop
 		DECODE_C
 		cmp.w	#256,d2
@@ -711,9 +744,15 @@ _UnlhaComplete::
 .havebits
 		move.l	d3,d0
 		lsr.l	d4,d0
+	IFNE IS020
+		moveq	#-1,d1
+		lsl.l	d4,d1
+		not.l	d1
+	ELSE
 		moveq	#0,d1
 		bset.l	d4,d1
 		subq.l	#1,d1
+	ENDC
 		and.l	d1,d3
 		bset.l	d2,d0
 .haveoffset

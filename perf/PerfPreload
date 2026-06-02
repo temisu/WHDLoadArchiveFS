@@ -1,4 +1,4 @@
-.key Slave/A,DataDir/A,OnlyLha/S,WHDLoadOptions/M
+.key Slave/A,DataDir/A,OnlyLha/S,NoInfo/S,WHDLoadOptions/M
 .bra [
 .ket ]
 
@@ -59,12 +59,14 @@ if not exists $DATA.9.zip
 	cd /
 endif
 
-du -sb $DATA >T:du
-set PS `awk {printf("%d",$1*1.12)} t:du`
-type T:du
-du -sb $DATA.xpk
-list #?.lha sort=n lformat="%l %s"
-list #?.zip sort=n lformat="%l %s"
+if "[NoInfo]" eq ""
+	du -sb $DATA >T:du
+	set PS `awk {printf("%d",$1*1.12)} t:du`
+	type T:du
+	du -sb $DATA.xpk
+	list #?.lha sort=n lformat="%l %s"
+	list #?.zip sort=n lformat="%l %s"
+endif
 
 set WHD "WHDLoadPP [Slave] NoReq SplashDelay=1 Preload PreloadSize=$PS ExecuteStartup=*"*" ExecuteCleanup=*"*" NoNetwork [WHDLoadOptions] Data"
 echo "Command=$WHD"
